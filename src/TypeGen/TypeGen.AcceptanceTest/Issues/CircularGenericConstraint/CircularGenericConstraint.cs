@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TypeGen.AcceptanceTest.GeneratorTestingUtils;
@@ -30,6 +31,23 @@ namespace TypeGen.AcceptanceTest.Issues
         public async Task GeneratesCorrectly(Type type, string expectedLocation)
         {
             await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation);
+        }
+
+        /// <summary>
+        /// Tests that the <see cref="ValueType"/> does not get included.
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task DoesNotGenerateValueType()
+        {
+
+            var generator = new Gen.Generator();
+            var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
+
+            var generatedFiles = await generator.GenerateAsync(typeof(IRecursiveConstraintInterfaceWithStructConstraint<>).Assembly);
+
+            Assert.DoesNotContain("value-type.ts", generatedFiles);
+            Assert.DoesNotContain(typeof(ValueType), interceptor.GeneratedOutputs.Values.Select(o => o.GeneratedFor));
         }
     }
 }
