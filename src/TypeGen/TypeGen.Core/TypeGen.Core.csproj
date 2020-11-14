@@ -4,6 +4,43 @@
     <DocumentationFile>TypeGen.Core.xml</DocumentationFile>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+
+	<PropertyGroup>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<RootNamespace>TypeGen.Core</RootNamespace>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<Description>Fork from TypeGen</Description>
+		<PackageId>TypeGenEnhanced</PackageId>
+	</PropertyGroup>
+
+	<!-- Parameters only set in pipeline -->
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
+		<!-- Only build NuGet package and symbols when deploying for performance reasons -->
+		<IncludeSymbols>true</IncludeSymbols>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<!-- Versioning -->
+	<!-- Local -->
+	<PropertyGroup Condition=" '$(BUILD_BUILDNUMBER)' == '' ">
+		<AssemblyVersion>0.0.0.1</AssemblyVersion>
+		<FileVersion>0.0.0.1</FileVersion>
+		<Version>0.0.0.1</Version>
+	</PropertyGroup>
+	<!-- Deploy -->
+	<PropertyGroup Condition=" '$(BUILD_BUILDNUMBER)' != '' ">
+		<AssemblyVersion>$(TYPEGEN_CORE_VERSION).$(BUILD_BUILDID)</AssemblyVersion>
+		<FileVersion>$(TYPEGEN_CORE_VERSION).$(BUILD_BUILDID)</FileVersion>
+		<Version>$(TYPEGEN_CORE_VERSION).$(BUILD_BUILDID)$(PRERELEASEFLAG)</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+	</ItemGroup>
+	
+	
   <ItemGroup>
     <None Remove="Templates\Class.tpl" />
     <None Remove="Templates\ClassProperty.tpl" />
