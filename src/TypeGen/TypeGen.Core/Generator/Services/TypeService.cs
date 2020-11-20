@@ -192,7 +192,9 @@ namespace TypeGen.Core.Generator.Services
         /// <inheritdoc/>
         public bool IsIngoredGenericConstarint(Type type)
         {
-            return IgnoredGenricConstraints.Contains(type);
+            var stripped = StripNullable(type);
+            Type baseFlatType = GetFlatType(stripped);
+            return IgnoredGenricConstraints.Contains(baseFlatType);
         }
 
         /// <inheritdoc />
@@ -429,7 +431,10 @@ namespace TypeGen.Core.Generator.Services
             if (constraints.Length + attributes.Length < 1)
                 return type.Name;
 
-            var tsConstraints = constraints.Select(GetGenericTsTypeConstraintForDeclaration).Concat(attributes).Aggregate((a, b) => a + " & " + b);
+            var tsConstraints = constraints
+                .Select(GetGenericTsTypeConstraintForDeclaration)
+                .Concat(attributes)
+                .Aggregate((a, b) => a + " & " + b);
 
             return $"{type.Name} extends { tsConstraints }";
             

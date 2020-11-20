@@ -58,7 +58,6 @@
 		<EmbeddedResource Include="Generator\Expected\with-ignored-base.ts" />
 		<EmbeddedResource Include="Generator\Expected\static-readonly.ts" />
 		<EmbeddedResource Include="Generator\Expected\enum-short-values.ts" />
-		<EmbeddedResource Include="Issues\CircularGenericConstraint\Expected\IRecursiveConstraintInterfaceWithStructConstraint.ts" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -73,6 +72,19 @@
 		<EmbeddedResource Include="Issues\CircularGenericConstraint\Expected\IRecursiveConstraintInterfaceWithClassConstraint.ts" />
 		<EmbeddedResource Include="Issues\CircularGenericConstraint\Expected\ICicrularConstraintInterface.ts" />
 		<EmbeddedResource Include="Issues\CircularGenericConstraint\Expected\IMultipleConstraintInterface.ts" />
+    <EmbeddedResource Include="Issues\CircularGenericConstraint\Expected\IRecursiveConstraintInterfaceWithStructConstraint.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Issues\IgnoreSomeBaseTypes\Expected\ignores-base-class.ts" />
+    <EmbeddedResource Include="Issues\IgnoreSomeBaseTypes\Expected\i-ignores-base-interface.ts" />
+    <EmbeddedResource Include="Issues\IgnoreSomeBaseTypes\Expected\ignores-base-interface.ts" />
+    <EmbeddedResource Include="Issues\IgnoreSomeBaseTypes\Expected\ignores-all-base.ts" />
+    <EmbeddedResource Include="Issues\IgnoreSomeBaseTypes\Expected\i-ignores-all-base.ts" />
+  </ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Issues\IgnoreSomeBaseTypes\Expected\" />
 	</ItemGroup>
 
 </Project>

@@ -53,8 +53,10 @@ namespace TypeGen.AcceptanceTest.Issues
 
     [ExportTsInterface]
     public interface IMultipleConstraintInterface<T>
-        where T : IA, IB
+    where T : IA, IB
     {
 
     }
+
+
 }
