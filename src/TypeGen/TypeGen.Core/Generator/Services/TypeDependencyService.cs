@@ -86,12 +86,23 @@ namespace TypeGen.Core.Generator.Services
         /// <returns></returns>
         private IEnumerable<TypeDependencyInfo> GetBaseTypeDependency(Type type)
         {
-            if (_metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type) != null) return Enumerable.Empty<TypeDependencyInfo>();
+            var ignoreAttr = _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type);
+
+
+            if (ignoreAttr != null && ignoreAttr.IgnoreAll)
+                return Enumerable.Empty<TypeDependencyInfo>();
 
             Type baseType = _typeService.GetBaseType(type);
-            if (baseType == null) return Enumerable.Empty<TypeDependencyInfo>();
+            if (baseType == null) 
+                return Enumerable.Empty<TypeDependencyInfo>();
 
-            return GetFlatTypeDependencies(baseType, null, true);
+            var toIgnore = ignoreAttr != null ? new HashSet<Type>(ignoreAttr.Ignore) : new HashSet<Type>();
+
+            if(toIgnore.Contains(baseType))
+                return Enumerable.Empty<TypeDependencyInfo>();
+
+            return GetFlatTypeDependencies(baseType, null, true)
+                .Where(t => !toIgnore.Contains(t.Type));
         }
 
         /// <summary>
@@ -101,15 +112,21 @@ namespace TypeGen.Core.Generator.Services
         /// <returns></returns>
         private IEnumerable<TypeDependencyInfo> GetImplementedInterfaceTypesDependencies(Type type)
         {
-            if (_metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type) != null) return Enumerable.Empty<TypeDependencyInfo>();
+            var ignoreAttr = _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type);
+
+            if (ignoreAttr != null && ignoreAttr.IgnoreAll)
+                return Enumerable.Empty<TypeDependencyInfo>();
 
             var baseTypes = _typeService.GetInterfaces(type);
             if (!baseTypes.Any()) return Enumerable.Empty<TypeDependencyInfo>();
 
-            return baseTypes
-                .SelectMany(baseType => GetFlatTypeDependencies(baseType, null, true));
-        }
+            var toIgnore = new HashSet<Type>(ignoreAttr.Ignore);
 
+            return baseTypes
+                .Where(t => !toIgnore.Contains(t))
+                .SelectMany(baseType => GetFlatTypeDependencies(baseType, null, true))
+                .Where(t => !toIgnore.Contains(t.Type));
+        }
 
         /// <summary>
         /// Gets type dependencies for the members inside a given type

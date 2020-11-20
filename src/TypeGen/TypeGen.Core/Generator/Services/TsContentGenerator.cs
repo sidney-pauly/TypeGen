@@ -87,6 +87,9 @@ namespace TypeGen.Core.Generator.Services
             Type baseType = _typeService.GetBaseType(type);
             if (baseType == null) return "";
 
+            if (GetFileteredBaseTypes(type, new[] { baseType }).Count() < 1)
+                return "";
+
             string baseTypeName = _typeService.GetTsTypeName(baseType, true);
             return _templateService.GetExtendsText(baseTypeName);
         }
@@ -104,7 +107,9 @@ namespace TypeGen.Core.Generator.Services
             IEnumerable<Type> baseTypes = _typeService.GetInterfaces(type);
             if (!baseTypes.Any()) return "";
 
-            IEnumerable<string> baseTypeNames = baseTypes.Select(baseType => _typeService.GetTsTypeName(baseType, true));
+            List<string> baseTypeNames = GetFileteredBaseTypes(type, baseTypes).Select(baseType => _typeService.GetTsTypeName(baseType, true)).ToList();
+            if (baseTypeNames.Count < 1)
+                return "";
             return _templateService.GetExtendsText(baseTypeNames);
         }
 
@@ -121,8 +126,28 @@ namespace TypeGen.Core.Generator.Services
             IEnumerable<Type> baseTypes = _typeService.GetInterfaces(type);
             if (!baseTypes.Any()) return "";
 
-            IEnumerable<string> baseTypeNames = baseTypes.Select(baseType => _typeService.GetTsTypeName(baseType, true));
+            List<string> baseTypeNames = GetFileteredBaseTypes(type, baseTypes).Select(baseType => _typeService.GetTsTypeName(baseType, true)).ToList();
+            if (baseTypeNames.Count < 1)
+                return "";
             return _templateService.GetImplementsText(baseTypeNames);
+        }
+
+        /// <summary>
+        /// Filters out all base types that should be ignored because of the <see cref="TsIgnoreBaseAttribute"/>
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="baseTypes"></param>
+        /// <returns></returns>
+        private IEnumerable<Type> GetFileteredBaseTypes(Type type, IEnumerable<Type> baseTypes)
+        {
+            var ignoreBaseAttribute = type.GetCustomAttribute<TsIgnoreBaseAttribute>();
+            if (ignoreBaseAttribute == null)
+                return baseTypes;
+            if (ignoreBaseAttribute.IgnoreAll)
+                return new Type[] { };
+
+            var toIgnore = new HashSet<Type>(ignoreBaseAttribute.Ignore);
+            return baseTypes.Where(t => !toIgnore.Contains(t));
         }
         
         /// <summary>
