@@ -22,7 +22,7 @@ namespace TypeGen.Core.Extensions
         {
             Requires.NotNull(type, nameof(type));
             Requires.NotNull(reader, nameof(reader));
-            
+
             return reader.GetAttribute<ExportTsClassAttribute>(type) != null ||
                    reader.GetAttribute<ExportTsInterfaceAttribute>(type) != null ||
                    reader.GetAttribute<ExportTsEnumAttribute>(type) != null;
@@ -38,7 +38,7 @@ namespace TypeGen.Core.Extensions
         {
             Requires.NotNull(types, nameof(types));
             Requires.NotNull(reader, nameof(reader));
-            
+
             return types.Where(t => t.HasExportAttribute(reader));
         }
 
@@ -52,8 +52,52 @@ namespace TypeGen.Core.Extensions
         {
             Requires.NotNull(memberInfos, nameof(memberInfos));
             Requires.NotNull(reader, nameof(reader));
-            
-            return memberInfos.Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null);
+
+            return memberInfos
+                .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null)
+                .Where(p =>
+                {
+                    if (p.Name.Contains('.'))
+                    {
+                        var split = p.Name.Split('.');
+                        var typeName = String.Join(".", split.Take(split.Length - 1));
+                        var typeIgnoreAttr = GetTypeFromFullName(typeName).GetCustomAttribute<TsIgnoreAttribute>();
+                        return typeIgnoreAttr == null;
+                    }
+                    else if(p is PropertyInfo propInfo)
+                    {
+                        var getMethod = propInfo.GetGetMethod();
+                        foreach(var @interface in p.DeclaringType.GetInterfaces())
+                        {
+                            var ignoreAttr = @interface.GetCustomAttribute<TsIgnoreAttribute>();
+                            if (ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties)
+                                continue;
+                            var map = p.DeclaringType.GetInterfaceMap(@interface);
+                            for(int i = 0; i < map.InterfaceMethods.Length; i ++ )
+                            {
+                                if (map.TargetMethods[i] == getMethod)
+                                    return false;
+                            }
+                        }
+                    }
+                    return true;
+                });
+        }
+
+        /// <summary>
+        /// Tries to get a type with the specified name from all any of the loaded assemblies
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static Type GetTypeFromFullName(string name)
+        {
+            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = assembly.GetType(name);
+                if (type != null)
+                    return type;
+            }
+            throw new Exception("Type not found");
         }
 
         /// <summary>
@@ -103,11 +147,11 @@ namespace TypeGen.Core.Extensions
         public static IEnumerable<string> GetTypeNames(this IEnumerable<object> enumerable)
         {
             Requires.NotNull(enumerable, nameof(enumerable));
-            
+
             return enumerable
                 .Select(c => c.GetType().Name);
         }
-        
+
         /// <summary>
         /// Shim for Type.GetInterface
         /// </summary>
@@ -118,7 +162,7 @@ namespace TypeGen.Core.Extensions
         {
             Requires.NotNull(type, nameof(type));
             Requires.NotNullOrEmpty(interfaceName, nameof(interfaceName));
-            
+
             return type.GetInterfaces()
                 .FirstOrDefault(i => i.Name == interfaceName || i.FullName == interfaceName);
         }
@@ -132,24 +176,29 @@ namespace TypeGen.Core.Extensions
         /// <param name="metadataReader"></param>
         /// <param name="withoutTsIgnore"></param>
         /// <returns></returns>
-        public static IEnumerable<MemberInfo> GetTsExportableMembers(this Type type, IMetadataReader metadataReader, bool withoutTsIgnore = true)
+        public static IEnumerable<MemberInfo> GetTsExportableMembers(this Type type, IMetadataReader metadataReader, bool includeExplicitProperties, bool withoutTsIgnore = true)
         {
             Requires.NotNull(type, nameof(type));
             TypeInfo typeInfo = type.GetTypeInfo();
 
             if (!typeInfo.IsClass && !typeInfo.IsInterface) return Enumerable.Empty<MemberInfo>();
 
-            var fieldInfos = (IEnumerable<MemberInfo>) typeInfo.DeclaredFields
+            var fieldInfos = (IEnumerable<MemberInfo>)typeInfo.DeclaredFields
                 .WithMembersFilter();
-            
-            var propertyInfos = (IEnumerable<MemberInfo>) typeInfo.DeclaredProperties
-                .WithMembersFilter();
+
+            IEnumerable<MemberInfo> propertyInfos;
+
+            if (!includeExplicitProperties)
+                propertyInfos = typeInfo.DeclaredProperties.WithMembersFilter();
+            else
+                propertyInfos = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
 
             if (withoutTsIgnore)
             {
                 fieldInfos = fieldInfos.WithoutTsIgnore(metadataReader);
                 propertyInfos = propertyInfos.WithoutTsIgnore(metadataReader);
-            }  
+            }
 
             return fieldInfos.Union(propertyInfos);
         }

@@ -72,7 +72,15 @@ namespace TypeGen.Core.Generator.Services
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        bool IsIngoredGenericConstarint(Type type);
+        bool IsIgnoredGenericConstarint(Type type);
+
+        /// <summary>
+        /// Returns if a type should be completly ignored
+        /// by the generator.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        bool IsIgnoredType(Type type);
 
         /// <summary>
         /// Gets TypeScript type name for a type

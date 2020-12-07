@@ -13,7 +13,7 @@ namespace TypeGen.Core.Generator.Services
 {
     internal class GenerationSpecProvider
     {
-        public GenerationSpec GetGenerationSpec(IEnumerable<Assembly> assemblies)
+        public GenerationSpec GetGenerationSpec(IEnumerable<Assembly> assemblies, GeneratorOptions options)
         {
             Requires.NotNull(assemblies, nameof(assemblies));
 
@@ -27,7 +27,7 @@ namespace TypeGen.Core.Generator.Services
 
                 foreach (Type type in types)
                 {
-                    TypeSpec typeSpec = GetTypeSpec(type, metadataReader);
+                    TypeSpec typeSpec = GetTypeSpec(type, metadataReader, options);
                     generationSpec.TypeSpecs.Add(type, typeSpec);
                 }
             }
@@ -35,20 +35,20 @@ namespace TypeGen.Core.Generator.Services
             return generationSpec;
         }
 
-        public GenerationSpec GetGenerationSpec(Type type)
+        public GenerationSpec GetGenerationSpec(Type type, GeneratorOptions options)
         {
             Requires.NotNull(type, nameof(type));
             
             var metadataReader = new AttributeMetadataReader();
             var generationSpec = new GenerationSpecProviderGenerationSpec();
 
-            TypeSpec typeSpec = GetTypeSpec(type, metadataReader);
+            TypeSpec typeSpec = GetTypeSpec(type, metadataReader, options);
             generationSpec.TypeSpecs.Add(type, typeSpec);
 
             return generationSpec;
         }
 
-        private TypeSpec GetTypeSpec(Type type, IMetadataReader metadataReader)
+        private TypeSpec GetTypeSpec(Type type, IMetadataReader metadataReader, GeneratorOptions options)
         {
             if (!type.HasExportAttribute(metadataReader))
                 throw new CoreException($"Type '{type.FullName}' should have an ExportAttribute attribute");
@@ -66,7 +66,7 @@ namespace TypeGen.Core.Generator.Services
                 typeSpec.AdditionalAttributes.Add(additionalAttribute);
             }
             
-            foreach (MemberInfo memberInfo in type.GetTsExportableMembers(metadataReader, false))
+            foreach (MemberInfo memberInfo in type.GetTsExportableMembers(metadataReader, options.IncludeExplicitProperties, false))
             {
                 IEnumerable<Attribute> attributes = metadataReader
                     .GetAttributes(memberInfo)

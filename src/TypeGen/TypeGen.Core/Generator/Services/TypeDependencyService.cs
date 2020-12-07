@@ -16,11 +16,13 @@ namespace TypeGen.Core.Generator.Services
     {
         private readonly ITypeService _typeService;
         private readonly IMetadataReaderFactory _metadataReaderFactory;
+        private readonly GeneratorOptions Options;
 
-        public TypeDependencyService(ITypeService typeService, IMetadataReaderFactory metadataReaderFactory)
+        public TypeDependencyService(ITypeService typeService, IMetadataReaderFactory metadataReaderFactory, GeneratorOptions options)
         {
             _typeService = typeService;
             _metadataReaderFactory = metadataReaderFactory;
+            Options = options;
         }
 
         /// <summary>
@@ -69,7 +71,7 @@ namespace TypeGen.Core.Generator.Services
                     var stripped = _typeService.StripNullable(constraint);
                     Type baseFlatType = _typeService.GetFlatType(stripped);
 
-                    if (_typeService.IsIngoredGenericConstarint(baseFlatType))
+                    if (_typeService.IsIgnoredGenericConstarint(baseFlatType))
                         continue;
 
                     result.AddRange(GetFlatTypeDependencies(baseFlatType));
@@ -88,7 +90,6 @@ namespace TypeGen.Core.Generator.Services
         {
             var ignoreAttr = _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type);
 
-
             if (ignoreAttr != null && ignoreAttr.IgnoreAll)
                 return Enumerable.Empty<TypeDependencyInfo>();
 
@@ -102,7 +103,8 @@ namespace TypeGen.Core.Generator.Services
                 return Enumerable.Empty<TypeDependencyInfo>();
 
             return GetFlatTypeDependencies(baseType, null, true)
-                .Where(t => !toIgnore.Contains(t.Type));
+                .Where(t => !toIgnore.Contains(t.Type))
+                .Where(t => !_typeService.IsIgnoredType(t.Type));
         }
 
         /// <summary>
@@ -120,12 +122,18 @@ namespace TypeGen.Core.Generator.Services
             var baseTypes = _typeService.GetInterfaces(type);
             if (!baseTypes.Any()) return Enumerable.Empty<TypeDependencyInfo>();
 
+            if (ignoreAttr == null)
+                return baseTypes
+                .SelectMany(baseType => GetFlatTypeDependencies(baseType, null, true))
+                .Where(t => !_typeService.IsIgnoredType(t.Type));
+
             var toIgnore = new HashSet<Type>(ignoreAttr.Ignore);
 
             return baseTypes
                 .Where(t => !toIgnore.Contains(t))
                 .SelectMany(baseType => GetFlatTypeDependencies(baseType, null, true))
-                .Where(t => !toIgnore.Contains(t.Type));
+                .Where(t => !toIgnore.Contains(t.Type))
+                .Where(t => !_typeService.IsIgnoredType(t.Type));
         }
 
         /// <summary>
@@ -137,7 +145,7 @@ namespace TypeGen.Core.Generator.Services
         {
             var result = new List<TypeDependencyInfo>();
 
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance());
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
             foreach (MemberInfo memberInfo in memberInfos)
             {
                 if (_metadataReaderFactory.GetInstance().GetAttribute<TsTypeAttribute>(memberInfo) != null) continue;
