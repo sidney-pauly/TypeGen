@@ -12,7 +12,7 @@ namespace TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes
 {
     public class IgnoreSomeBaseTypes
     {
-        // <summary>
+        /// <summary>
         /// Looks into generating classes and interfaces with circular type constraints
         /// </summary>
         /// <param name="type"></param>
@@ -25,7 +25,7 @@ namespace TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes
         [InlineData(typeof(IIgnoresAllBase), @"TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes.Expected.i-ignores-all-base.ts")]
         public async Task GeneratesCorrectly(Type type, string expectedLocation)
         {
-            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation);
+            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation, true);
         }
 
         /// <summary>

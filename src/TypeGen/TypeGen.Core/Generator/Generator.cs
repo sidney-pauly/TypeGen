@@ -62,7 +62,7 @@ namespace TypeGen.Core.Generator
             _fileSystem = new FileSystem();
             _metadataReaderFactory = new MetadataReaderFactory();
             _typeService = new TypeService(_metadataReaderFactory, generatorOptionsProvider);
-            _typeDependencyService = new TypeDependencyService(_typeService, _metadataReaderFactory);
+            _typeDependencyService = new TypeDependencyService(_typeService, _metadataReaderFactory, options);
             _templateService = new TemplateService(internalStorage, generatorOptionsProvider);
 
             _tsContentGenerator = new TsContentGenerator(_typeDependencyService,
@@ -338,7 +338,7 @@ namespace TypeGen.Core.Generator
             Requires.NotNullOrEmpty(assemblies, nameof(assemblies));
             
             var generationSpecProvider = new GenerationSpecProvider();
-            GenerationSpec generationSpec = generationSpecProvider.GetGenerationSpec(assemblies);
+            GenerationSpec generationSpec = generationSpecProvider.GetGenerationSpec(assemblies, Options);
 
             return Generate(new[] { generationSpec });
         }
@@ -363,7 +363,7 @@ namespace TypeGen.Core.Generator
             Requires.NotNull(type, nameof(type));
             
             var generationSpecProvider = new GenerationSpecProvider();
-            GenerationSpec generationSpec = generationSpecProvider.GetGenerationSpec(type);
+            GenerationSpec generationSpec = generationSpecProvider.GetGenerationSpec(type, Options);
 
             return Generate(new[] { generationSpec });
         }
@@ -567,7 +567,7 @@ namespace TypeGen.Core.Generator
         private string GetClassPropertiesText(Type type)
         {
             var propertiesText = "";
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance());
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
 
             // create TypeScript source code for properties' definition
 
@@ -621,7 +621,7 @@ namespace TypeGen.Core.Generator
         private string GetInterfacePropertiesText(Type type)
         {
             var propertiesText = "";
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance());
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
 
             // create TypeScript source code for properties' definition
 

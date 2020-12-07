@@ -134,20 +134,24 @@ namespace TypeGen.Core.Generator.Services
 
         /// <summary>
         /// Filters out all base types that should be ignored because of the <see cref="TsIgnoreBaseAttribute"/>
+        /// or the <see cref="TsIgnoreAttribute"/>
         /// </summary>
         /// <param name="type"></param>
         /// <param name="baseTypes"></param>
         /// <returns></returns>
         private IEnumerable<Type> GetFileteredBaseTypes(Type type, IEnumerable<Type> baseTypes)
         {
+            var filtered = baseTypes
+                .Where(t => !_typeService.IsIgnoredType(t));
             var ignoreBaseAttribute = type.GetCustomAttribute<TsIgnoreBaseAttribute>();
             if (ignoreBaseAttribute == null)
-                return baseTypes;
+                return filtered;
             if (ignoreBaseAttribute.IgnoreAll)
                 return new Type[] { };
 
             var toIgnore = new HashSet<Type>(ignoreBaseAttribute.Ignore);
-            return baseTypes.Where(t => !toIgnore.Contains(t));
+            return filtered
+                .Where(t => !toIgnore.Contains(t));
         }
         
         /// <summary>
@@ -213,7 +217,7 @@ namespace TypeGen.Core.Generator.Services
 
         private IEnumerable<string> GetCustomImportsFromMembers(Type type)
         {
-            IEnumerable<MemberInfo> members = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance());
+            IEnumerable<MemberInfo> members = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), GeneratorOptions.IncludeExplicitProperties);
 
             IEnumerable<TsTypeAttribute> typeAttributes = members
                 .Select(memberInfo => _metadataReaderFactory.GetInstance().GetAttribute<TsTypeAttribute>(memberInfo))

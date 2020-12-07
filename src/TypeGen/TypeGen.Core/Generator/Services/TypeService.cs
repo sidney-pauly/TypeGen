@@ -190,11 +190,17 @@ namespace TypeGen.Core.Generator.Services
         }
 
         /// <inheritdoc/>
-        public bool IsIngoredGenericConstarint(Type type)
+        public bool IsIgnoredGenericConstarint(Type type)
         {
             var stripped = StripNullable(type);
             Type baseFlatType = GetFlatType(stripped);
-            return IgnoredGenricConstraints.Contains(baseFlatType);
+            return IsIgnoredType(type) || IgnoredGenricConstraints.Contains(baseFlatType);
+        }
+
+        /// <inheritdoc/>
+        public bool IsIgnoredType(Type type)
+        {
+            return type.GetCustomAttribute<TsIgnoreAttribute>() != null;
         }
 
         /// <inheritdoc />
@@ -426,7 +432,7 @@ namespace TypeGen.Core.Generator.Services
         /// <returns></returns>
         private string GetGenericTsTypeConstraintsForDeclaration(Type type)
         {
-            var constraints = type.GetGenericParameterConstraints().Where(t => !IsIngoredGenericConstarint(t)).ToArray();
+            var constraints = type.GetGenericParameterConstraints().Where(t => !IsIgnoredGenericConstarint(t)).ToArray();
             var attributes = GetGenericTsTypeConstraintAttributesForDecleration(type);
             if (constraints.Length + attributes.Length < 1)
                 return type.Name;

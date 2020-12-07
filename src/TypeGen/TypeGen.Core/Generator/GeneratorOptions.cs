@@ -15,9 +15,10 @@ namespace TypeGen.Core.Generator
         public static bool DefaultExplicitPublicAccessor => false;
         public static TypeNameConverterCollection DefaultFileNameConverters => new TypeNameConverterCollection(new PascalCaseToKebabCaseConverter());
         public static TypeNameConverterCollection DefaultTypeNameConverters => new TypeNameConverterCollection();
-        public static MemberNameConverterCollection DefaultPropertyNameConverters => new MemberNameConverterCollection(new PascalCaseToCamelCaseConverter());
+        public static MemberNameConverterCollection DefaultPropertyNameConverters => new MemberNameConverterCollection(new PascalCaseToCamelCaseConverter(), new ExplicitImplementationPostfixTypeNameConverter());
         public static MemberNameConverterCollection DefaultEnumValueNameConverters => new MemberNameConverterCollection();
         public static MemberNameConverterCollection DefaultEnumStringInitializersConverters => new MemberNameConverterCollection();
+        public static bool DefaultIncludeExplicitProperties => false;
         public static string DefaultTypeScriptFileExtension => "ts";
         public static bool DefaultSingleQuotes => false;
         public static bool DefaultCreateIndexFile => false;
@@ -40,6 +41,7 @@ namespace TypeGen.Core.Generator
             PropertyNameConverters = DefaultPropertyNameConverters;
             EnumValueNameConverters = DefaultEnumValueNameConverters;
             EnumStringInitializersConverters = DefaultEnumStringInitializersConverters;
+            IncludeExplicitProperties = DefaultIncludeExplicitProperties;
             TypeScriptFileExtension = DefaultTypeScriptFileExtension;
             SingleQuotes = DefaultSingleQuotes;
             CreateIndexFile = DefaultCreateIndexFile;
@@ -77,6 +79,16 @@ namespace TypeGen.Core.Generator
         /// A collection (chain) of converters used for converting C# enum value names to TypeScript enum string initializers
         /// </summary>
         public MemberNameConverterCollection EnumStringInitializersConverters { get; set; }
+
+        /// <summary>
+        /// Include properties that are implicitly implemented.
+        /// <br/>
+        /// Note:
+        /// make sure you affix the type name to your property to avoid
+        /// collisions. As a default the <see cref="ExplicitImplementationPostfixTypeNameConverter"/>
+        /// is in the <see cref="PropertyNameConverters"/> to do this
+        /// </summary>
+        public bool IncludeExplicitProperties { get; set; }
 
         /// <summary>
         /// Whether to generate explicit "public" accessor in TypeScript classes

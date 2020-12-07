@@ -11,6 +11,7 @@ using Constants = TypeGen.TestWebApp.Constants;
 using ErrorCase = TypeGen.TestWebApp.ErrorCase;
 using TypeGen.Core.SpecGeneration;
 using DefaultExport = TypeGen.TestWebApp.DefaultExport;
+using TypeGen.Core.Generator;
 
 namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
 {
@@ -67,11 +68,12 @@ namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
         [InlineData(typeof(DefaultExport.ClassWithImports), "TypeGen.AcceptanceTest.Generator.Expected.default_export.class-with-imports.ts")]
         [InlineData(typeof(DefaultExport.ClassWithoutDefaultExport), "TypeGen.AcceptanceTest.Generator.Expected.default_export.class-without-default-export.ts")]
         [InlineData(typeof(DefaultExport.InterfaceWithDefaultExport), "TypeGen.AcceptanceTest.Generator.Expected.default_export.interface-with-default-export.ts")]
-        public async Task TestGenerate(Type type, string expectedLocation)
+        public async Task TestGenerate(Type type, string expectedLocation, bool includeExplicit = false)
         {
             var readExpectedTask = EmbededResourceReader.GetEmbeddedResourceAsync(expectedLocation);
 
-            var generator = new Gen.Generator();
+            var opt = new GeneratorOptions { IncludeExplicitProperties = includeExplicit };
+            var generator = new Gen.Generator(opt);
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
             await generator.GenerateAsync(type.Assembly);
