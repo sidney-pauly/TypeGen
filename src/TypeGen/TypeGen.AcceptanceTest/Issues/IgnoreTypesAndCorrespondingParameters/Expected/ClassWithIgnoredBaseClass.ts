@@ -8,6 +8,4 @@ import { FileStyleUriParser } from "./file-style-uri-parser";
 export class ClassWithIgnoredBaseClass {
     overwrittenPrimitiveProperty: number;
     overwrittenCustomProperty: FileStyleUriParser;
-    noneOverittenPrimitiveProperty: number;
-    noneOverwrittenCustomProperty: FileStyleUriParser;
 }

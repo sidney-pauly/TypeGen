@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
+using TypeGen.Core.SpecGeneration;
 
 namespace TypeGen.Core.Generator.Services
 {
@@ -10,9 +12,12 @@ namespace TypeGen.Core.Generator.Services
         /// </summary>
         /// <param name="type"></param>
         /// <param name="outputDir"></param>
+        /// <param name="otherTypes"></param>
+        /// <param name="customDependencyMapping"></param>
+        /// <param name="strict"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown when one of: type, fileNameConverters or typeNameConverters is null</exception>
-        string GetImportsText(Type type, string outputDir);
+        string GetImportsText(Type type, string outputDir, IDictionary<Type, TypeSpec> otherTypes, CustomDependencyMap customDependencyMapping, bool strict);
 
         /// <summary>
         /// Gets the text for the "extends" section

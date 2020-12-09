@@ -5,6 +5,7 @@ using Xunit;
 using TypeGen.Cli.Extensions;
 using TypeGen.Core.Extensions;
 using TypeGen.Core.Converters;
+using TypeGen.Core.Generator.Services;
 
 namespace TypeGen.Cli.Test.Models
 {
@@ -34,7 +35,7 @@ namespace TypeGen.Cli.Test.Models
             Assert.Equal("ts", tgConfig.TypeScriptFileExtension);
             Assert.Equal(4, tgConfig.TabLength);
             Assert.Equal(new [] { "PascalCaseToKebabCaseConverter" }, tgConfig.FileNameConverters);
-            Assert.Equal(new string[0], tgConfig.TypeNameConverters);
+            Assert.Equal(new[] { nameof(GenericTypeNameCollisionConverter) }, tgConfig.TypeNameConverters);
             Assert.Equal(new[] { "PascalCaseToCamelCaseConverter", nameof(ExplicitImplementationPostfixTypeNameConverter) }, tgConfig.PropertyNameConverters);
             Assert.Equal(new string[0], tgConfig.EnumValueNameConverters);
             Assert.Equal(new string[0], tgConfig.ExternalAssemblyPaths);

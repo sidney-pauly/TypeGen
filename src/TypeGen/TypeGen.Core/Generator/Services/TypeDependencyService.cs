@@ -32,9 +32,10 @@ namespace TypeGen.Core.Generator.Services
         /// Returns a distinct result (i.e. no duplicate TypeDependencyInfo instances)
         /// </summary>
         /// <param name="type"></param>
+        /// <param name="recursive">If set, the dependencies of the dependencies are also returned</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown when the type is null</exception>
-        public IEnumerable<TypeDependencyInfo> GetTypeDependencies(Type type)
+        public IEnumerable<TypeDependencyInfo> GetTypeDependencies(Type type, bool recursive = true)
         {
             Requires.NotNull(type, nameof(type));
 
@@ -94,12 +95,12 @@ namespace TypeGen.Core.Generator.Services
                 return Enumerable.Empty<TypeDependencyInfo>();
 
             Type baseType = _typeService.GetBaseType(type);
-            if (baseType == null) 
+            if (baseType == null)
                 return Enumerable.Empty<TypeDependencyInfo>();
 
             var toIgnore = ignoreAttr != null ? new HashSet<Type>(ignoreAttr.Ignore) : new HashSet<Type>();
 
-            if(toIgnore.Contains(baseType))
+            if (toIgnore.Contains(baseType))
                 return Enumerable.Empty<TypeDependencyInfo>();
 
             return GetFlatTypeDependencies(baseType, null, true)
