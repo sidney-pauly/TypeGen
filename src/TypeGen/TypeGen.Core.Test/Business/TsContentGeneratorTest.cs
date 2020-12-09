@@ -9,6 +9,7 @@ using TypeGen.Core.Converters;
 using TypeGen.Core.Generator;
 using TypeGen.Core.Generator.Services;
 using TypeGen.Core.Metadata;
+using TypeGen.Core.SpecGeneration;
 using TypeGen.Core.TypeAnnotations;
 using Xunit;
 
@@ -45,7 +46,7 @@ namespace TypeGen.Core.Test.Business
             var tsContentGenerator = new TsContentGenerator(_typeDependencyService, _typeService, _templateService, _tsContentParser, _metadataReaderFactory, generatorOptionsProvider, null);
             
             //act,assert
-            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(null, "asdf"));
+            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(null, "asdf", new Dictionary<Type, TypeSpec>(), new CustomDependencyMap(), false));
         }
         
         [Fact]
@@ -56,7 +57,7 @@ namespace TypeGen.Core.Test.Business
             
             //act,assert
             var tsContentGenerator = new TsContentGenerator(_typeDependencyService, _typeService, _templateService, _tsContentParser, _metadataReaderFactory, generatorOptionsProvider, null);
-            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(typeof(string), "asdf"));
+            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(typeof(string), "asdf", new Dictionary<Type, TypeSpec>(), new CustomDependencyMap(), false));
         }
         
         [Fact]
@@ -67,7 +68,7 @@ namespace TypeGen.Core.Test.Business
             var tsContentGenerator = new TsContentGenerator(_typeDependencyService, _typeService, _templateService, _tsContentParser, _metadataReaderFactory, generatorOptionsProvider, null);
             
             //act,assert
-            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(typeof(string), "asdf"));
+            Assert.Throws<ArgumentNullException>(() => tsContentGenerator.GetImportsText(typeof(string), "asdf", new Dictionary<Type, TypeSpec>(), new CustomDependencyMap(), false));
         }
         
         [Theory]
@@ -90,7 +91,7 @@ namespace TypeGen.Core.Test.Business
             var tsContentGenerator = new TsContentGenerator(_typeDependencyService, _typeService, _templateService, _tsContentParser, _metadataReaderFactory, generatorOptionsProvider, null);
 
             //act
-            string actualOutput = tsContentGenerator.GetImportsText(type, outputDir);
+            string actualOutput = tsContentGenerator.GetImportsText(type, outputDir, new Dictionary<Type, TypeSpec>(), new CustomDependencyMap(), false);
 
             //assert
             Assert.Equal(expectedOutput, actualOutput);

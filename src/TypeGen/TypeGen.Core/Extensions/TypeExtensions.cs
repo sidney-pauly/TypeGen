@@ -191,7 +191,7 @@ namespace TypeGen.Core.Extensions
             if (!includeExplicitProperties)
                 propertyInfos = typeInfo.DeclaredProperties.WithMembersFilter();
             else
-                propertyInfos = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                propertyInfos = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
 
 
             if (withoutTsIgnore)

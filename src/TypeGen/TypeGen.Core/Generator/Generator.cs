@@ -420,7 +420,9 @@ namespace TypeGen.Core.Generator
         private IEnumerable<string> GenerateClassOrInterface(Type type, ExportTsClassAttribute classAttribute, ExportTsInterfaceAttribute interfaceAttribute)
         {
             string outputDir = classAttribute != null ? classAttribute.OutputDir : interfaceAttribute.OutputDir;
-            IEnumerable<string> dependenciesGenerationResult = GenerateTypeDependencies(type, outputDir);
+            IEnumerable<string> dependenciesGenerationResult = new List<string>();
+            if (!Options.StrictDependencies)
+                dependenciesGenerationResult = GenerateTypeDependencies(type, outputDir);
 
             // get text for sections
 
@@ -444,7 +446,7 @@ namespace TypeGen.Core.Generator
 
             string implementsText = _tsContentGenerator.GetImplementsText(type);
 
-            string importsText = _tsContentGenerator.GetImportsText(type, outputDir);
+            string importsText = _tsContentGenerator.GetImportsText(type, outputDir, _metadataReaderFactory.GenerationSpec.TypeSpecs, Options.CustomDependencyMapping, Options.StrictDependencies);
             string propertiesText = classAttribute != null ? GetClassPropertiesText(type) : GetInterfacePropertiesText(type);
 
             // generate the file content

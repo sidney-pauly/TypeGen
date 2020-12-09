@@ -10,11 +10,13 @@ namespace TypeGen.Core.Generator
     /// </summary>
     public class GeneratorOptions
     {
+        public static bool DefaultStrictDependencies => false;
+        public static CustomDependencyMap DefaultCustomDependencyMapping => new CustomDependencyMap();
         public static int DefaultTabLength => 4;
         public static bool DefaultUseTabCharacter => false;
         public static bool DefaultExplicitPublicAccessor => false;
         public static TypeNameConverterCollection DefaultFileNameConverters => new TypeNameConverterCollection(new PascalCaseToKebabCaseConverter());
-        public static TypeNameConverterCollection DefaultTypeNameConverters => new TypeNameConverterCollection();
+        public static TypeNameConverterCollection DefaultTypeNameConverters => new TypeNameConverterCollection(new GenericTypeNameCollisionConverter());
         public static MemberNameConverterCollection DefaultPropertyNameConverters => new MemberNameConverterCollection(new PascalCaseToCamelCaseConverter(), new ExplicitImplementationPostfixTypeNameConverter());
         public static MemberNameConverterCollection DefaultEnumValueNameConverters => new MemberNameConverterCollection();
         public static MemberNameConverterCollection DefaultEnumStringInitializersConverters => new MemberNameConverterCollection();
@@ -33,6 +35,8 @@ namespace TypeGen.Core.Generator
 
         public GeneratorOptions()
         {
+            StrictDependencies = DefaultStrictDependencies;
+            CustomDependencyMapping = DefaultCustomDependencyMapping;
             TabLength = DefaultTabLength;
             UseTabCharacter = DefaultUseTabCharacter;
             ExplicitPublicAccessor = DefaultExplicitPublicAccessor;
@@ -54,6 +58,19 @@ namespace TypeGen.Core.Generator
             UseDefaultExport = DefaultUseDefaultExport;
             IndexFileExtension = DefaultIndexFileExtension;
         }
+
+        /// <summary>
+        /// If enabled all dependencies have to either be other types included
+        /// in the same Generator run or included in the 
+        /// </summary>
+        public bool StrictDependencies { get; set; }
+
+        /// <summary>
+        /// A map providing alternative import paths for namespaces or specific
+        /// types. <br/>
+        /// Known issue: Default imports are not working
+        /// </summary>
+        public CustomDependencyMap CustomDependencyMapping {get; set;}
 
         /// <summary>
         /// A collection (chain) of converters used for converting C# file names to TypeScript file names

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using TypeGen.Core.Extensions;
 using TypeGen.Core.Logging;
 using TypeGen.Core.Metadata;
+using TypeGen.Core.SpecGeneration;
 using TypeGen.Core.TypeAnnotations;
 using TypeGen.Core.Utils;
 using TypeGen.Core.Validation;
@@ -55,15 +56,18 @@ namespace TypeGen.Core.Generator.Services
         /// </summary>
         /// <param name="type"></param>
         /// <param name="outputDir">ExportTs... attribute's output dir</param>
+        /// <param name="otherTypes"></param>
+        /// <param name="customDependencyMapping"></param>
+        /// <param name="strict"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Thrown when one of: type, fileNameConverters or typeNameConverters is null</exception>
-        public string GetImportsText(Type type, string outputDir)
+        public string GetImportsText(Type type, string outputDir, IDictionary<Type, TypeSpec> otherTypes, CustomDependencyMap customDependencyMapping, bool strict)
         {
             Requires.NotNull(type, nameof(type));
             Requires.NotNull(GeneratorOptions.FileNameConverters, nameof(GeneratorOptions.FileNameConverters));
             Requires.NotNull(GeneratorOptions.TypeNameConverters, nameof(GeneratorOptions.TypeNameConverters));
 
-            string result = GetTypeDependencyImportsText(type, outputDir);
+            string result = GetTypeDependencyImportsText(type, outputDir, otherTypes, customDependencyMapping, strict);
             result += GetCustomImportsText(type);
 
             if (!string.IsNullOrEmpty(result))
@@ -83,7 +87,7 @@ namespace TypeGen.Core.Generator.Services
         {
             Requires.NotNull(type, nameof(type));
             Requires.NotNull(GeneratorOptions.TypeNameConverters, nameof(GeneratorOptions.TypeNameConverters));
-            
+
             Type baseType = _typeService.GetBaseType(type);
             if (baseType == null) return "";
 
@@ -153,14 +157,17 @@ namespace TypeGen.Core.Generator.Services
             return filtered
                 .Where(t => !toIgnore.Contains(t));
         }
-        
+
         /// <summary>
         /// Returns TypeScript imports source code related to type dependencies
         /// </summary>
         /// <param name="type"></param>
         /// <param name="outputDir"></param>
+        /// <param name="otherTypes"></param>
+        /// <param name="customDependencyMapping"></param>
+        /// <param name="strict"></param>
         /// <returns></returns>
-        private string GetTypeDependencyImportsText(Type type, string outputDir)
+        private string GetTypeDependencyImportsText(Type type, string outputDir, IDictionary<Type, TypeSpec> otherTypes, CustomDependencyMap customDependencyMapping, bool strict)
         {
             if (!string.IsNullOrEmpty(outputDir) && !outputDir.EndsWith("/") && !outputDir.EndsWith("\\")) outputDir += "\\";
             var result = "";
@@ -176,23 +183,36 @@ namespace TypeGen.Core.Generator.Services
             {
                 Type typeDependency = typeDependencyInfo.Type;
 
-                string dependencyOutputDir = GetTypeDependencyOutputDir(typeDependencyInfo, outputDir);
-
-                // get path diff
-                string pathDiff = FileSystemUtils.GetPathDiff(outputDir, dependencyOutputDir);
-                pathDiff = pathDiff.StartsWith("..\\") || pathDiff.StartsWith("../") ? pathDiff : $"./{pathDiff}";
-
-                // get type & file name
                 string typeDependencyName = typeDependency.Name.RemoveTypeArity();
-                string fileName = GeneratorOptions.FileNameConverters.Convert(typeDependencyName, typeDependency);
-
-                // get file path
-                string dependencyPath = Path.Combine(pathDiff.EnsurePostfix("/"), fileName);
-                dependencyPath = dependencyPath.Replace('\\', '/');
-
                 string typeName = GeneratorOptions.TypeNameConverters.Convert(typeDependencyName, typeDependency);
-                
-                result += _typeService.UseDefaultExport(typeDependency) ?
+
+                bool defaultExport;
+                string dependencyPath;
+
+                if (!TryGetCutomImport(typeDependency, customDependencyMapping, out dependencyPath, out defaultExport))
+                {
+
+                    if (strict && !otherTypes.ContainsKey(typeDependency))
+                        throw new MissingDependencyException(type, typeDependency);
+
+                    string dependencyOutputDir = GetTypeDependencyOutputDir(typeDependencyInfo, outputDir);
+
+                    // get path diff
+                    string pathDiff = FileSystemUtils.GetPathDiff(outputDir, dependencyOutputDir);
+                    pathDiff = pathDiff.StartsWith("..\\") || pathDiff.StartsWith("../") ? pathDiff : $"./{pathDiff}";
+
+                    // get type & file name
+                    string fileName = GeneratorOptions.FileNameConverters.Convert(typeDependencyName, typeDependency);
+
+                    // get file path
+                    dependencyPath = Path.Combine(pathDiff.EnsurePostfix("/"), fileName);
+                    dependencyPath = dependencyPath.Replace('\\', '/');
+
+                    defaultExport = _typeService.UseDefaultExport(typeDependency);
+
+                }
+
+                result += defaultExport ?
                     _templateService.FillImportDefaultExportTemplate(typeName, dependencyPath) :
                     _templateService.FillImportTemplate(typeName, "", dependencyPath);
             }
@@ -244,9 +264,55 @@ namespace TypeGen.Core.Generator.Services
 
             string name = withOriginalTypeName ? originalTypeName : typeName;
             string typeAlias = withOriginalTypeName ? typeName : null;
-            
-            return isDefaultExport ? _templateService.FillImportDefaultExportTemplate(name, importPath) : 
+
+            return isDefaultExport ? _templateService.FillImportDefaultExportTemplate(name, importPath) :
                 _templateService.FillImportTemplate(name, typeAlias, importPath);
+        }
+
+        /// <summary>
+        /// Tries to get a custom import path for the provided type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="customDependencyMapping"></param>
+        /// <param name="alternativeImportPath"></param>
+        /// <param name="defaultExport"></param>
+        /// <returns></returns>
+        private bool TryGetCutomImport(Type type, CustomDependencyMap customDependencyMapping, out string? alternativeImportPath, out bool defaultExport)
+        {
+            if (customDependencyMapping.ContainsKey(type.FullName))
+            {
+                var alternativeImport = customDependencyMapping[type.FullName];
+                alternativeImportPath = alternativeImport.Path;
+                defaultExport = alternativeImport.DefaultExport;
+                return true;
+            }
+            string _namespace = type.Namespace;
+            Queue<string> droppedNamepaces = new Queue<string>();
+            while (true)
+            {
+                if (customDependencyMapping.ContainsKey(_namespace))
+                {
+                    var alternativeImport = customDependencyMapping[_namespace];
+                    if (alternativeImport.FlatDependencyStructure)
+                        alternativeImportPath = alternativeImport.Path;
+                    else if (droppedNamepaces.Count < 2)
+                        alternativeImportPath = alternativeImport.Path;
+                    else
+                        alternativeImportPath = alternativeImport.Path + "/" + droppedNamepaces.Skip(1).Aggregate((a, b) => a + "/" + b);
+
+                    defaultExport = false;
+                    return true;
+                }
+                var split = _namespace.Split('.');
+                if (split.Length < 2)
+                    break;
+                    droppedNamepaces.Enqueue(split[split.Length - 1]);
+                _namespace = String.Join(".", split.Take(split.Length - 1));
+            }
+            alternativeImportPath = null;
+            defaultExport = false;
+            return false;
+
         }
 
         /// <summary>
@@ -285,7 +351,7 @@ namespace TypeGen.Core.Generator.Services
         public string GetCustomBody(string filePath, int indentSize)
         {
             Requires.NotNull(filePath, nameof(filePath));
-            
+
             string content = _tsContentParser.GetTagContent(filePath, indentSize, KeepTsTagName, CustomBodyTagName);
             string tab = StringUtils.GetTabText(indentSize);
 
@@ -303,7 +369,7 @@ namespace TypeGen.Core.Generator.Services
         public string GetCustomHead(string filePath)
         {
             Requires.NotNull(filePath, nameof(filePath));
-            
+
             string content = _tsContentParser.GetTagContent(filePath, 0, CustomHeadTagName);
             return string.IsNullOrEmpty(content)
                 ? ""
@@ -324,7 +390,7 @@ namespace TypeGen.Core.Generator.Services
                 object instance = memberInfo.IsStatic() ? null : ActivatorUtils.CreateInstanceAutoFillGenericParameters(memberInfo.DeclaringType);
                 var valueObj = new object();
                 object valueObjGuard = valueObj;
-                
+
                 switch (memberInfo)
                 {
                     case FieldInfo fieldInfo:
@@ -337,7 +403,7 @@ namespace TypeGen.Core.Generator.Services
 
                 // if valueObj hasn't been assigned in the switch
                 if (valueObj == valueObjGuard) return null;
-                
+
                 // if valueObj's value is the default value for its type
                 if (valueObj == null || valueObj.Equals(TypeUtils.GetDefaultValue(valueObj.GetType()))) return null;
 
@@ -365,7 +431,7 @@ namespace TypeGen.Core.Generator.Services
             {
                 _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.FullName}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.FullName}' has no default constructor.", LogLevel.Debug);
             }
-            catch (ArgumentException e) when(e.InnerException is TypeLoadException)
+            catch (ArgumentException e) when (e.InnerException is TypeLoadException)
             {
                 _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.FullName}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.FullName}' has generic parameters with base class or interface constraints.", LogLevel.Debug);
             }
