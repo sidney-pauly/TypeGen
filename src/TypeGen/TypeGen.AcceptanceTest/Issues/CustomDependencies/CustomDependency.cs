@@ -19,32 +19,7 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies
     public class CustomDependency
     {
 
-        class MinimalTypesSpec : GenerationSpec
-        {
-
-            Type MainType { get; set; }
-            Type[] OtherTypes { get; set; }
-
-            public MinimalTypesSpec(Type mainType, Type[] otherTypes)
-            {
-                MainType = mainType;
-                OtherTypes = otherTypes;
-            }
-            public override void OnBeforeGeneration(OnBeforeGenerationArgs args)
-            {
-                if (MainType.IsInterface)
-                    AddInterface(MainType);
-                else
-                    AddClass(MainType);
-
-                foreach(var type in OtherTypes)
-                    if (type.IsInterface)
-                        AddInterface(type);
-                    else
-                        AddClass(type);
-
-            }
-        }
+        
 
         static Regex NestedImportRegex = new Regex("import {.+} from \".*\";", RegexOptions.Multiline);
         static Regex DefaultExportImportRegex = new Regex("import .* from \".*\";", RegexOptions.Multiline);

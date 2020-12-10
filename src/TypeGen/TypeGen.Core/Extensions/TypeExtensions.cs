@@ -64,7 +64,7 @@ namespace TypeGen.Core.Extensions
                         var typeIgnoreAttr = GetTypeFromFullName(typeName).GetCustomAttribute<TsIgnoreAttribute>();
                         return typeIgnoreAttr == null;
                     }
-                    else if(p is PropertyInfo propInfo)
+                    else if(p is PropertyInfo propInfo && !p.DeclaringType.IsInterface)
                     {
                         var getMethod = propInfo.GetGetMethod();
                         foreach(var @interface in p.DeclaringType.GetInterfaces())
@@ -72,6 +72,7 @@ namespace TypeGen.Core.Extensions
                             var ignoreAttr = @interface.GetCustomAttribute<TsIgnoreAttribute>();
                             if (ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties)
                                 continue;
+
                             var map = p.DeclaringType.GetInterfaceMap(@interface);
                             for(int i = 0; i < map.InterfaceMethods.Length; i ++ )
                             {
