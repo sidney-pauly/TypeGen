@@ -47,6 +47,7 @@ namespace TypeGen.Core.Extensions
         /// </summary>
         /// <param name="memberInfos"></param>
         /// <param name="reader"></param>
+        /// <param name="ignoredTypes"></param>
         /// <returns></returns>
         public static IEnumerable<T> WithoutTsIgnore<T>(this IEnumerable<T> memberInfos, IMetadataReader reader) where T : MemberInfo
         {
@@ -61,20 +62,20 @@ namespace TypeGen.Core.Extensions
                     {
                         var split = p.Name.Split('.');
                         var typeName = String.Join(".", split.Take(split.Length - 1));
-                        var typeIgnoreAttr = GetTypeFromFullName(typeName).GetCustomAttribute<TsIgnoreAttribute>();
+                        var typeIgnoreAttr = reader.GetAttribute<TsIgnoreAttribute>(GetTypeFromFullName(typeName));
                         return typeIgnoreAttr == null;
                     }
-                    else if(p is PropertyInfo propInfo && !p.DeclaringType.IsInterface)
+                    else if (p is PropertyInfo propInfo && !p.DeclaringType.IsInterface)
                     {
                         var getMethod = propInfo.GetGetMethod();
-                        foreach(var @interface in p.DeclaringType.GetInterfaces())
+                        foreach (var @interface in p.DeclaringType.GetInterfaces())
                         {
-                            var ignoreAttr = @interface.GetCustomAttribute<TsIgnoreAttribute>();
+                            var ignoreAttr = reader.GetAttribute<TsIgnoreAttribute>(@interface);
                             if (ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties)
                                 continue;
 
                             var map = p.DeclaringType.GetInterfaceMap(@interface);
-                            for(int i = 0; i < map.InterfaceMethods.Length; i ++ )
+                            for (int i = 0; i < map.InterfaceMethods.Length; i++)
                             {
                                 if (map.TargetMethods[i] == getMethod)
                                     return false;
@@ -92,7 +93,7 @@ namespace TypeGen.Core.Extensions
         /// <returns></returns>
         public static Type GetTypeFromFullName(string name)
         {
-            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var type = assembly.GetType(name);
                 if (type != null)

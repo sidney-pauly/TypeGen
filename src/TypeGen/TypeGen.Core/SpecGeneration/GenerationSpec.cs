@@ -13,11 +13,13 @@ namespace TypeGen.Core.SpecGeneration
     {
         internal IDictionary<Type, TypeSpec> TypeSpecs { get; }
         internal IList<BarrelSpec> BarrelSpecs { get; }
+        internal HashSet<Type> IgnoredTypes { get; }
 
         protected GenerationSpec()
         {
             TypeSpecs = new Dictionary<Type, TypeSpec>();
             BarrelSpecs = new List<BarrelSpec>();
+            IgnoredTypes = new HashSet<Type>();
         }
 
         public virtual void OnBeforeGeneration(OnBeforeGenerationArgs args)
@@ -26,6 +28,24 @@ namespace TypeGen.Core.SpecGeneration
 
         public virtual void OnBeforeBarrelGeneration(OnBeforeBarrelGenerationArgs args)
         {
+        }
+
+        /// <summary>
+        /// Adds the provided type to the list of ignored types
+        /// </summary>
+        /// <param name="type"></param>
+        protected void AddIgnored(Type type)
+        {
+            IgnoredTypes.Add(type);
+        }
+
+        /// <summary>
+        /// Adds the provided type to the list of ignored types
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        protected void AddIgnored<T>()
+        {
+            AddIgnored(typeof(T));
         }
 
         /// <summary>

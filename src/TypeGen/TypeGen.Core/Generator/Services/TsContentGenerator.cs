@@ -147,7 +147,7 @@ namespace TypeGen.Core.Generator.Services
         {
             var filtered = baseTypes
                 .Where(t => !_typeService.IsIgnoredType(t));
-            var ignoreBaseAttribute = type.GetCustomAttribute<TsIgnoreBaseAttribute>();
+            var ignoreBaseAttribute = _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type);
             if (ignoreBaseAttribute == null)
                 return filtered;
             if (ignoreBaseAttribute.IgnoreAll)

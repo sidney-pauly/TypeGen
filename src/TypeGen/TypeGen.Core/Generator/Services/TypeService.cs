@@ -200,7 +200,7 @@ namespace TypeGen.Core.Generator.Services
         /// <inheritdoc/>
         public bool IsIgnoredType(Type type)
         {
-            return type.GetCustomAttribute<TsIgnoreAttribute>() != null;
+            return _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(type) != null;
         }
 
         /// <inheritdoc />
