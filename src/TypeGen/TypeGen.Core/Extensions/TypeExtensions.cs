@@ -55,14 +55,15 @@ namespace TypeGen.Core.Extensions
             Requires.NotNull(reader, nameof(reader));
 
             return memberInfos
-                .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null)
+                .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null && i.GetCustomAttribute<TsIgnoreAttribute>() == null)
                 .Where(p =>
                 {
                     if (p.Name.Contains('.'))
                     {
                         var split = p.Name.Split('.');
                         var typeName = String.Join(".", split.Take(split.Length - 1));
-                        var typeIgnoreAttr = reader.GetAttribute<TsIgnoreAttribute>(GetTypeFromFullName(typeName));
+                        var t = GetTypeFromFullName(typeName);
+                        var typeIgnoreAttr = reader.GetAttribute<TsIgnoreAttribute>(t) ?? t.GetCustomAttribute<TsIgnoreAttribute>();
                         return typeIgnoreAttr == null;
                     }
                     else if (p is PropertyInfo propInfo && !p.DeclaringType.IsInterface)
@@ -70,7 +71,7 @@ namespace TypeGen.Core.Extensions
                         var getMethod = propInfo.GetGetMethod();
                         foreach (var @interface in p.DeclaringType.GetInterfaces())
                         {
-                            var ignoreAttr = reader.GetAttribute<TsIgnoreAttribute>(@interface);
+                            var ignoreAttr = reader.GetAttribute<TsIgnoreAttribute>(@interface) ?? @interface.GetCustomAttribute<TsIgnoreAttribute>();
                             if (ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties)
                                 continue;
 
