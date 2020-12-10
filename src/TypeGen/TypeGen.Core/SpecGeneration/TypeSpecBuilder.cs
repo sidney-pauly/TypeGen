@@ -21,7 +21,7 @@ namespace TypeGen.Core.SpecGeneration
         }
 
         protected internal void AddActiveMemberAttribute(Attribute attribute) => _spec.MemberAttributes[_activeMemberName].Add(attribute);
-        protected internal void AddTypeAttribute(Attribute attribute) => _spec.AdditionalAttributes.Add(attribute);
+        public void AddTypeAttribute(Attribute attribute) => _spec.AdditionalAttributes.Add(attribute);
         
         public TDerived Member(string memberName)
         {
