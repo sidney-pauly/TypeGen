@@ -7,6 +7,13 @@ namespace TypeGen.Core.Test.GeneratorTestingUtils
 {
     public class GeneratedOutput
     {
+        static public string FromatOutput(string output)
+            => output
+                .Trim()
+                .Replace("\n", "")
+                .Replace("\r", "")
+                .Replace("\r\n", "");
+
         #region Properties
 
         /// <summary>

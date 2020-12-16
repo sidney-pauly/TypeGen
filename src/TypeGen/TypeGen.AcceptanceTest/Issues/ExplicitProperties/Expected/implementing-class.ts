@@ -7,8 +7,10 @@ import { IInterface } from "./i-interface";
 import { FileStyleUriParser } from "./file-style-uri-parser";
 
 export class ImplementingClass implements IInterface {
-    primitiveImplicitProperty: number;
-    complexImplicitProperty: FileStyleUriParser;
-    PrimitiveExplicitProperty_qjmY77ItHF: number;
-    ComplexExplicitProperty_qjmY77ItHF: FileStyleUriParser;
+    PrimitiveImplicitProperty: number;
+    ComplexImplicitProperty: FileStyleUriParser;
+    PrimitiveExplicitProperty_XiH5Zr: number;
+    ComplexExplicitProperty_XiH5Zr: FileStyleUriParser;
+    PrimitiveImplicitProperty_XiH5Zr: number;
+    ComplexImplicitProperty_XiH5Zr: FileStyleUriParser;
 }

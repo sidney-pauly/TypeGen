@@ -47,7 +47,7 @@ namespace TypeGen.Core.Extensions
         /// </summary>
         /// <param name="memberInfos"></param>
         /// <param name="reader"></param>
-        /// <param name="ignoredTypes"></param>
+        /// <param name="overridenDeclaringType"></param>
         /// <returns></returns>
         public static IEnumerable<T> WithoutTsIgnore<T>(this IEnumerable<T> memberInfos, IMetadataReader reader) where T : MemberInfo
         {
@@ -55,31 +55,60 @@ namespace TypeGen.Core.Extensions
             Requires.NotNull(reader, nameof(reader));
 
             return memberInfos
-                .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null && i.GetCustomAttribute<TsIgnoreAttribute>() == null)
+                .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null && i.GetCustomAttribute<TsIgnoreAttribute>(false) == null)
                 .Where(p =>
                 {
+                    var declaringType = p.DeclaringType;
                     if (p.Name.Contains('.'))
                     {
                         var split = p.Name.Split('.');
                         var typeName = String.Join(".", split.Take(split.Length - 1));
                         var t = GetTypeFromFullName(typeName);
-                        var typeIgnoreAttr = reader.GetAttribute<TsIgnoreAttribute>(t) ?? t.GetCustomAttribute<TsIgnoreAttribute>();
-                        return typeIgnoreAttr == null;
+                        var typeIgnoreAttr = reader.GetAttribute<TsIgnoreAttribute>(t) ?? t.GetCustomAttribute<TsIgnoreAttribute>(false);
+                        if (typeIgnoreAttr != null)
+                            return false;
+
+                        var interfaceProp = t.GetProperty(split.Last(), BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
+
+                        if ((reader.GetAttribute<TsIgnoreAttribute>(interfaceProp) ?? interfaceProp.GetCustomAttribute<TsIgnoreAttribute>(false)) != null)
+                            return false;
+
+                        return true;
                     }
-                    else if (p is PropertyInfo propInfo && !p.DeclaringType.IsInterface)
+                    else if (p is PropertyInfo propInfo && !declaringType.IsInterface)
                     {
                         var getMethod = propInfo.GetGetMethod();
-                        foreach (var @interface in p.DeclaringType.GetInterfaces())
+                        foreach (var @interface in declaringType.GetInterfaces())
                         {
-                            var ignoreAttr = reader.GetAttribute<TsIgnoreAttribute>(@interface) ?? @interface.GetCustomAttribute<TsIgnoreAttribute>();
-                            if (ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties)
-                                continue;
+                            var ignoreAttr = reader.GetAttribute<TsIgnoreAttribute>(@interface) ?? @interface.GetCustomAttribute<TsIgnoreAttribute>(false);
+                            bool ignoreAll = !(ignoreAttr == null || !ignoreAttr.IgnoreImplicitlyImplementedProperties);
 
-                            var map = p.DeclaringType.GetInterfaceMap(@interface);
+                            Dictionary<MethodInfo, PropertyInfo> getMethodPropMapping = ignoreAll
+                            ?
+                            new Dictionary<MethodInfo, PropertyInfo>()
+                            :
+                            @interface
+                            .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly | BindingFlags.Static)
+                            .ToDictionary(pr => pr.GetMethod);
+
+                            var map = declaringType.GetInterfaceMap(@interface);
                             for (int i = 0; i < map.InterfaceMethods.Length; i++)
                             {
-                                if (map.TargetMethods[i] == getMethod)
-                                    return false;
+                                if (ignoreAll)
+                                {
+                                    if (map.TargetMethods[i] == getMethod)
+                                        return false;
+                                }
+                                else
+                                {
+                                    if (getMethodPropMapping.ContainsKey(map.InterfaceMethods[i]))
+                                    {
+                                        var prop = getMethodPropMapping[map.InterfaceMethods[i]];
+                                        if ((reader.GetAttribute<TsIgnoreAttribute>(prop) ?? prop.GetCustomAttribute<TsIgnoreAttribute>(false)) != null)
+                                            return false;
+                                    }
+                                }
+
                             }
                         }
                     }
@@ -94,9 +123,23 @@ namespace TypeGen.Core.Extensions
         /// <returns></returns>
         public static Type GetTypeFromFullName(string name)
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            if (name.Contains("<"))
+            {
+                var split = name.Split('<');
+                name = split[0] + "`" + ((split[1].Split(',').Count()));
+            }
+
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (var assembly in assemblies)
             {
                 var type = assembly.GetType(name);
+                if (type != null)
+                    return type;
+            }
+            foreach (var assembly in assemblies)
+            {
+                var type = assembly.GetType(name, false, true);
                 if (type != null)
                     return type;
             }
@@ -177,6 +220,7 @@ namespace TypeGen.Core.Extensions
         /// </summary>
         /// <param name="type">Class type</param>
         /// <param name="metadataReader"></param>
+        /// <param name="includeExplicitProperties"></param>
         /// <param name="withoutTsIgnore"></param>
         /// <returns></returns>
         public static IEnumerable<MemberInfo> GetTsExportableMembers(this Type type, IMetadataReader metadataReader, bool includeExplicitProperties, bool withoutTsIgnore = true)
@@ -188,6 +232,15 @@ namespace TypeGen.Core.Extensions
 
             var fieldInfos = (IEnumerable<MemberInfo>)typeInfo.DeclaredFields
                 .WithMembersFilter();
+
+            IEnumerable<MemberInfo> interfaceMembers = new List<MemberInfo>();
+            if (type.IsClass)
+                foreach (var i in type.GetInterfaces())
+                    if (!withoutTsIgnore || ((metadataReader.GetAttribute<TsIgnoreAttribute>(i) ?? i.GetCustomAttribute<TsIgnoreAttribute>(false)) == null))
+                        ((List<MemberInfo>)interfaceMembers).AddRange(
+                            i.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+                            .Select(p => new CustomPropertyInfo(type, p.Name.Contains(".") ? p.Name : (i.Namespace + "." + i.Name + "." + p.Name), p))
+                            );
 
             IEnumerable<MemberInfo> propertyInfos;
 
@@ -201,9 +254,33 @@ namespace TypeGen.Core.Extensions
             {
                 fieldInfos = fieldInfos.WithoutTsIgnore(metadataReader);
                 propertyInfos = propertyInfos.WithoutTsIgnore(metadataReader);
+                interfaceMembers = interfaceMembers.WithoutTsIgnore(metadataReader);
             }
 
-            return fieldInfos.Union(propertyInfos);
+
+            return fieldInfos
+                .Concat(propertyInfos)
+                .Concat(interfaceMembers)
+                .Distinct(new MemberUniquenessEqualitiyComparer());
+        }
+
+        private class MemberUniquenessEqualitiyComparer : IEqualityComparer<MemberInfo>
+        {
+            public bool Equals(MemberInfo x, MemberInfo y)
+            {
+                if (x == null && y == null)
+                    return true;
+                if ((x == null) != (y == null))
+                    return false;
+
+                return x.Name == y.Name;
+
+            }
+
+            public int GetHashCode(MemberInfo obj)
+            {
+                return obj?.Name.GetHashCode() ?? 0;
+            }
         }
     }
 }

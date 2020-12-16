@@ -32,6 +32,7 @@ namespace TypeGen.Core.Generator
         public static string DefaultFileHeading => null;
         public static bool DefaultUseDefaultExport => false;
         public static string DefaultIndexFileExtension => DefaultTypeScriptFileExtension;
+        public static bool DefaultAssignDefaultValues => true;
 
         public GeneratorOptions()
         {
@@ -57,6 +58,7 @@ namespace TypeGen.Core.Generator
             FileHeading = DefaultFileHeading;
             UseDefaultExport = DefaultUseDefaultExport;
             IndexFileExtension = DefaultIndexFileExtension;
+            AssignDefaultValues = DefaultAssignDefaultValues;
         }
 
         /// <summary>
@@ -189,5 +191,10 @@ namespace TypeGen.Core.Generator
         /// The file extension to use for the index file(s). Defaults to whatever is set for TypeScriptFileExtension.
         /// </summary>
         public string IndexFileExtension { get; set; }
+
+        /// <summary>
+        /// Wether or not default value should be added to the properties.
+        /// </summary>
+        public bool AssignDefaultValues { get; set; }
     }
 }

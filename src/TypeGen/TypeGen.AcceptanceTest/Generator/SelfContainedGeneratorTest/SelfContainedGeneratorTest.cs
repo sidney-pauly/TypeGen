@@ -80,7 +80,7 @@ namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
             var expected = (await readExpectedTask).Trim();
 
             Assert.True(interceptor.GeneratedOutputs.ContainsKey(type));
-            Assert.Equal(expected, FromatOutput(interceptor.GeneratedOutputs[type].Content));
+            Assert.Equal(expected, GeneratedOutput.FromatOutput(interceptor.GeneratedOutputs[type].Content));
         }
 
 
@@ -103,15 +103,10 @@ namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
             var expected = (await readExpectedTask).Trim();
 
             Assert.True(interceptor.GeneratedOutputs.ContainsKey(type));
-            Assert.Equal(expected, FromatOutput(interceptor.GeneratedOutputs[type].Content));
+            Assert.Equal(expected, GeneratedOutput.FromatOutput(interceptor.GeneratedOutputs[type].Content));
         }
 
-        private string FromatOutput(string output) 
-            => output
-                .Trim()
-                .Replace("\n", "") 
-                .Replace("\r", "")
-                .Replace("\r\n", "");
+       
 
         private class AcceptanceTestGenerationSpec : GenerationSpec
         {

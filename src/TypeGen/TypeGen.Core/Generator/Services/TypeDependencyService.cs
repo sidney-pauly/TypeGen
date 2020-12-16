@@ -41,7 +41,7 @@ namespace TypeGen.Core.Generator.Services
 
             var typeInfo = type.GetTypeInfo();
 
-            if (!typeInfo.IsClass && !typeInfo.IsInterface) return Enumerable.Empty<TypeDependencyInfo>();
+            if (!typeInfo.IsClass && !typeInfo.IsInterface && !typeInfo.IsValueType) return Enumerable.Empty<TypeDependencyInfo>();
 
             type = _typeService.StripNullable(type);
 
@@ -75,6 +75,9 @@ namespace TypeGen.Core.Generator.Services
                     if (_typeService.IsIgnoredGenericConstarint(baseFlatType))
                         continue;
 
+                    if (_typeService.IsTsSimpleType(baseFlatType))
+                        continue;
+                    
                     result.AddRange(GetFlatTypeDependencies(baseFlatType));
                 }
             }

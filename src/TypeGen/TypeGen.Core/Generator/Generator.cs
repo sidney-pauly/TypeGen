@@ -249,6 +249,10 @@ namespace TypeGen.Core.Generator
         private IEnumerable<string> GenerateTypeInit(Type type)
         {
             IEnumerable<string> files = Enumerable.Empty<string>();
+
+            if (_metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(type) != null || type.GetCustomAttribute<TsIgnoreAttribute>(false) != null)
+                return files;
+
             
             _generationContext.InitializeTypeGeneratedTypes();
             _generationContext.Add(type);
@@ -542,7 +546,7 @@ namespace TypeGen.Core.Generator
                 return _templateService.FillClassPropertyTemplate(modifiers, name, typeName, typeUnions, defaultValueAttribute.DefaultValue);
 
             // try to get default value from the member's default value
-            string valueText = _tsContentGenerator.GetMemberValueText(memberInfo);
+            string valueText = Options.AssignDefaultValues ? _tsContentGenerator.GetMemberValueText(memberInfo) : "";
             if (!string.IsNullOrWhiteSpace(valueText))
                 return _templateService.FillClassPropertyTemplate(modifiers, name, typeName, typeUnions, valueText);
 
