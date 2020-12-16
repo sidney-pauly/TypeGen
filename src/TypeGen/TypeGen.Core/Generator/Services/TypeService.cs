@@ -94,6 +94,7 @@ namespace TypeGen.Core.Generator.Services
 
             switch (type.FullName)
             {
+                case "System.Enum":
                 case "System.Object":
                     return "Object";
                 case "System.Boolean":
@@ -200,7 +201,9 @@ namespace TypeGen.Core.Generator.Services
         /// <inheritdoc/>
         public bool IsIgnoredType(Type type)
         {
-            return _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(type) != null || type.GetCustomAttribute<TsIgnoreAttribute>() != null;
+            return type == typeof(ValueType)
+                || _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(type) != null
+                || type.GetCustomAttribute<TsIgnoreAttribute>(false) != null;
         }
 
         /// <inheritdoc />
@@ -364,8 +367,9 @@ namespace TypeGen.Core.Generator.Services
 
                 if (!keyTypeName.In("number", "string"))
                 {
-                    throw new CoreException($"Error when determining TypeScript type for C# type '{type.FullName}':" +
-                                            " TypeScript dictionary key type must be either 'number' or 'string'");
+                    return GetTsMapTypeText(keyTypeName, valueTypeName);
+                    //throw new CoreException($"Error when determining TypeScript type for C# type '{type.FullName}':" +
+                    //                        " TypeScript dictionary key type must be either 'number' or 'string'");
                 }
 
                 return GetTsDictionaryTypeText(keyTypeName, valueTypeName);
@@ -383,6 +387,8 @@ namespace TypeGen.Core.Generator.Services
         }
 
         private string GetTsDictionaryTypeText(string keyTypeName, string valueTypeName) => $"{{ [key: {keyTypeName}]: {valueTypeName}; }}";
+        private string GetTsMapTypeText(string keyTypeName, string valueTypeName) => $" Map<{keyTypeName}, {valueTypeName}>";
+
 
         /// <summary>
         /// Gets TypeScript type name for a collection type

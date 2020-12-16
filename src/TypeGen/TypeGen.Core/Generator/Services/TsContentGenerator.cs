@@ -146,7 +146,7 @@ namespace TypeGen.Core.Generator.Services
         private IEnumerable<Type> GetFileteredBaseTypes(Type type, IEnumerable<Type> baseTypes)
         {
             var filtered = baseTypes
-                .Where(t => !_typeService.IsIgnoredType(t));
+                .Where(t => !_typeService.IsIgnoredType(t.IsGenericType ? t.GetGenericTypeDefinition() : t));
             var ignoreBaseAttribute = _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreBaseAttribute>(type);
             if (ignoreBaseAttribute == null)
                 return filtered;

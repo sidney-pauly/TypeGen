@@ -39,21 +39,25 @@ namespace TypeGen.Core.Converters
         /// <returns></returns>
         public string Convert(string name, MemberInfo memberInfo)
         {
+            bool fromInterface = memberInfo.DeclaringType.IsInterface;
+            Type originType = memberInfo.DeclaringType;
+
             // Return if not explicit property
-            if (!memberInfo.Name.Contains('.'))
+            if (!memberInfo.Name.Contains('.') && !fromInterface)
                 return name;
 
             if (name.Contains('.'))
             {
                 var split = name.Split('.');
                 name = split[split.Length - 1];
+                originType = TypeGen.Core.Extensions.TypeExtensions.GetTypeFromFullName(String.Join(".", split.Take(split.Length - 1)));
             }
 
             if (name.Contains('`'))
                 name = name.Split('`')[0];
 
-            var typeHash = System.Convert.ToBase64String(PROPERTY_TYPE_UUID_HASH_NAMESPACE.Create(memberInfo.DeclaringType.FullName).ToByteArray())
-               .Substring(0, 10)
+            var typeHash = System.Convert.ToBase64String(PROPERTY_TYPE_UUID_HASH_NAMESPACE.Create(originType.Namespace + originType.Name).ToByteArray())
+               .Substring(0, 6)
                .Replace('+', '_')
                .Replace('/', '$');
 
