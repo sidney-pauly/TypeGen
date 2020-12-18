@@ -168,7 +168,7 @@ namespace TypeGen.Core.Generator.Services
 
         private IEnumerable<TypeDependencyInfo> GetFlatTypeDependencies(Type flatType, IEnumerable<Attribute> memberAttributes = null, bool isBase = false)
         {
-            if (_typeService.IsTsSimpleType(flatType) || flatType.IsGenericParameter) return Enumerable.Empty<TypeDependencyInfo>();
+            if (_typeService.IsIgnoredType(flatType) || _typeService.IsTsSimpleType(flatType) || flatType.IsGenericParameter) return Enumerable.Empty<TypeDependencyInfo>();
 
             if (flatType.GetTypeInfo().IsGenericType)
             {
