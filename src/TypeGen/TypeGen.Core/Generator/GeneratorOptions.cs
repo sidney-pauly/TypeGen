@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TypeGen.Core.Converters;
 using TypeGen.Core.Generator.Services;
 using TypeGen.Core.Utils;
@@ -33,6 +34,7 @@ namespace TypeGen.Core.Generator
         public static bool DefaultUseDefaultExport => false;
         public static string DefaultIndexFileExtension => DefaultTypeScriptFileExtension;
         public static bool DefaultAssignDefaultValues => true;
+        public static HashSet<Type> DefaultNeverImplementedPropertyTypes => new HashSet<Type>();
 
         public GeneratorOptions()
         {
@@ -59,6 +61,7 @@ namespace TypeGen.Core.Generator
             UseDefaultExport = DefaultUseDefaultExport;
             IndexFileExtension = DefaultIndexFileExtension;
             AssignDefaultValues = DefaultAssignDefaultValues;
+            NeverImplementedPropertyTypes = DefaultNeverImplementedPropertyTypes;
         }
 
         /// <summary>
@@ -196,5 +199,10 @@ namespace TypeGen.Core.Generator
         /// Wether or not default value should be added to the properties.
         /// </summary>
         public bool AssignDefaultValues { get; set; }
+
+        /// <summary>
+        /// Properties witht the provided type will never be included in the generation
+        /// </summary>
+        public HashSet<Type> NeverImplementedPropertyTypes { get; set; }
     }
 }

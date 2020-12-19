@@ -66,7 +66,7 @@ namespace TypeGen.Core.Generator.Services
                 typeSpec.AdditionalAttributes.Add(additionalAttribute);
             }
             
-            foreach (MemberInfo memberInfo in type.GetTsExportableMembers(metadataReader, options.IncludeExplicitProperties, false))
+            foreach (MemberInfo memberInfo in type.GetTsExportableMembers(metadataReader, options.IncludeExplicitProperties, options.NeverImplementedPropertyTypes, false))
             {
                 IEnumerable<Attribute> attributes = metadataReader
                     .GetAttributes(memberInfo)

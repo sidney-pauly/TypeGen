@@ -149,7 +149,7 @@ namespace TypeGen.Core.Generator.Services
         {
             var result = new List<TypeDependencyInfo>();
 
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties, Options.NeverImplementedPropertyTypes);
             foreach (MemberInfo memberInfo in memberInfos)
             {
                 if (_metadataReaderFactory.GetInstance().GetAttribute<TsTypeAttribute>(memberInfo) != null) continue;

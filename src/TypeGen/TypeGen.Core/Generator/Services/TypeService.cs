@@ -15,9 +15,13 @@ namespace TypeGen.Core.Generator.Services
     /// </summary>
     internal class TypeService : ITypeService
     {
-        private static HashSet<Type> IgnoredGenricConstraints = new HashSet<Type>
+        private static HashSet<Type> DefaultIgnoredTypes = new HashSet<Type>
         {
-            typeof(ValueType)
+            typeof(ValueType),
+            typeof(IComparable),
+            typeof(IComparable<>),
+            typeof(IFormattable),
+            typeof(IConvertible)
         };
 
         private readonly IMetadataReaderFactory _metadataReaderFactory;
@@ -195,15 +199,16 @@ namespace TypeGen.Core.Generator.Services
         {
             var stripped = StripNullable(type);
             Type baseFlatType = GetFlatType(stripped);
-            return IsIgnoredType(type) || IgnoredGenricConstraints.Contains(baseFlatType);
+            return IsIgnoredType(type) || DefaultIgnoredTypes.Contains(baseFlatType);
         }
 
         /// <inheritdoc/>
         public bool IsIgnoredType(Type type)
         {
-            return type == typeof(ValueType)
-                || _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(type) != null
-                || type.GetCustomAttribute<TsIgnoreAttribute>(false) != null;
+            var flat = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
+            return DefaultIgnoredTypes.Contains(flat)
+                || _metadataReaderFactory.GetInstance().GetAttribute<TsIgnoreAttribute>(flat) != null
+                || flat.GetCustomAttribute<TsIgnoreAttribute>(false) != null;
         }
 
         /// <inheritdoc />

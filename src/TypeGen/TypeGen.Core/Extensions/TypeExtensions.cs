@@ -49,7 +49,7 @@ namespace TypeGen.Core.Extensions
         /// <param name="reader"></param>
         /// <param name="overridenDeclaringType"></param>
         /// <returns></returns>
-        public static IEnumerable<T> WithoutTsIgnore<T>(this IEnumerable<T> memberInfos, IMetadataReader reader) where T : MemberInfo
+        public static IEnumerable<T> WithoutTsIgnore<T>(this IEnumerable<T> memberInfos, IMetadataReader reader, HashSet<Type> neverImplementedProperyTypes) where T : MemberInfo
         {
             Requires.NotNull(memberInfos, nameof(memberInfos));
             Requires.NotNull(reader, nameof(reader));
@@ -58,6 +58,9 @@ namespace TypeGen.Core.Extensions
                 .Where(i => reader.GetAttribute<TsIgnoreAttribute>(i) == null && i.GetCustomAttribute<TsIgnoreAttribute>(false) == null)
                 .Where(p =>
                 {
+                    if (p is PropertyInfo pi && neverImplementedProperyTypes.Contains(pi.PropertyType))
+                        return false;
+
                     var declaringType = p.DeclaringType;
                     if (p.Name.Contains('.'))
                     {
@@ -221,9 +224,14 @@ namespace TypeGen.Core.Extensions
         /// <param name="type">Class type</param>
         /// <param name="metadataReader"></param>
         /// <param name="includeExplicitProperties"></param>
+        /// <param name="neverImplementedPropertyTypes"></param>
         /// <param name="withoutTsIgnore"></param>
         /// <returns></returns>
-        public static IEnumerable<MemberInfo> GetTsExportableMembers(this Type type, IMetadataReader metadataReader, bool includeExplicitProperties, bool withoutTsIgnore = true)
+        public static IEnumerable<MemberInfo> GetTsExportableMembers(this Type type,
+            IMetadataReader metadataReader,
+            bool includeExplicitProperties,
+            HashSet<Type> neverImplementedPropertyTypes,
+            bool withoutTsIgnore = true)
         {
             Requires.NotNull(type, nameof(type));
             TypeInfo typeInfo = type.GetTypeInfo();
@@ -252,9 +260,9 @@ namespace TypeGen.Core.Extensions
 
             if (withoutTsIgnore)
             {
-                fieldInfos = fieldInfos.WithoutTsIgnore(metadataReader);
-                propertyInfos = propertyInfos.WithoutTsIgnore(metadataReader);
-                interfaceMembers = interfaceMembers.WithoutTsIgnore(metadataReader);
+                fieldInfos = fieldInfos.WithoutTsIgnore(metadataReader, neverImplementedPropertyTypes);
+                propertyInfos = propertyInfos.WithoutTsIgnore(metadataReader, neverImplementedPropertyTypes);
+                interfaceMembers = interfaceMembers.WithoutTsIgnore(metadataReader, neverImplementedPropertyTypes);
             }
 
 
