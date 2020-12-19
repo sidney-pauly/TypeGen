@@ -60,7 +60,7 @@ namespace TypeGen.Core.Test.Extensions
                 typeof(WithoutTsIgnore_TestClass).GetProperty("B")
             };
 
-            IEnumerable<MemberInfo> actualResult = memberInfos.WithoutTsIgnore(_metadataReader);
+            IEnumerable<MemberInfo> actualResult = memberInfos.WithoutTsIgnore(_metadataReader, new HashSet<Type>());
             Assert.Equal(expectedResult, actualResult);
         }
 

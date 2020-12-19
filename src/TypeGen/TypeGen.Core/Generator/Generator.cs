@@ -573,7 +573,7 @@ namespace TypeGen.Core.Generator
         private string GetClassPropertiesText(Type type)
         {
             var propertiesText = "";
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties, Options.NeverImplementedPropertyTypes);
 
             // create TypeScript source code for properties' definition
 
@@ -627,7 +627,7 @@ namespace TypeGen.Core.Generator
         private string GetInterfacePropertiesText(Type type)
         {
             var propertiesText = "";
-            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties);
+            IEnumerable<MemberInfo> memberInfos = type.GetTsExportableMembers(_metadataReaderFactory.GetInstance(), Options.IncludeExplicitProperties, Options.NeverImplementedPropertyTypes);
 
             // create TypeScript source code for properties' definition
 
