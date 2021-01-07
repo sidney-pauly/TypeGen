@@ -1,5 +1,6 @@
 ﻿using DependencyNamespace;
-using DependencyNamespace.DependencySubnamespace.DependencyNamespace;
+using DependencyNamespace.DependencySubnamespace;
+using DependencyNamespace.DependencySubnamespace.SubSubNamespace;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,10 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies.TestClasses
     }
 
     public class SubNamespaceDependent : SubNamespacedDependency
+    {
+    }
+
+    public class SubSubNamespaceDependent : SubSubNamespacedDependency
     {
     }
 

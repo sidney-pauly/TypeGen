@@ -1,5 +1,6 @@
 ﻿using DependencyNamespace;
-using DependencyNamespace.DependencySubnamespace.DependencyNamespace;
+using DependencyNamespace.DependencySubnamespace;
+using DependencyNamespace.DependencySubnamespace.SubSubNamespace;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,9 +76,11 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies
         [InlineData(typeof(FileStyleUriParserDependent), typeof(FileStyleUriParser), false)]
         [InlineData(typeof(NamespaceDependent), typeof(NamespacedDependency), false)]
         [InlineData(typeof(SubNamespaceDependent), typeof(SubNamespacedDependency), false)]
+        [InlineData(typeof(SubSubNamespaceDependent), typeof(SubSubNamespacedDependency), false)]
         [InlineData(typeof(FileStyleUriParserDependent), typeof(FileStyleUriParser), true)]
         [InlineData(typeof(NamespaceDependent), typeof(NamespacedDependency), true)]
         [InlineData(typeof(SubNamespaceDependent), typeof(SubNamespacedDependency), true)]
+        [InlineData(typeof(SubSubNamespaceDependent), typeof(SubSubNamespacedDependency), true)]
         [Theory]
         public async Task DirectlyProvidedDependencyPath(Type type, Type dependency, bool defaultExport)
         {
@@ -109,13 +112,16 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies
 
         }
 
-        [Fact]
-        public async Task ImportsFromNamespace()
+        [InlineData(typeof(NamespaceDependent), typeof(NamespacedDependency))]
+        [InlineData(typeof(SubNamespaceDependent), typeof(SubNamespacedDependency))]
+        [InlineData(typeof(SubSubNamespaceDependent), typeof(SubSubNamespacedDependency))]
+        [Theory]
+        public async Task ImportsFromSubnamespace(Type type, Type dep)
         {
 
             Guid importLocation = Guid.NewGuid();
             var importMap = new CustomDependencyMap();
-            importMap.Add(typeof(NamespacedDependency).Namespace, new CustomTSDependency(importLocation.ToString()));
+            importMap.Add(dep.Namespace.Split('.').First(), new CustomTSDependency(importLocation.ToString()));
 
             var opt = new GeneratorOptions
             {
@@ -127,7 +133,7 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies
             var generator = new Gen.Generator(opt);
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
-            await generator.GenerateAsync(new[] { new MinimalTypesSpec(typeof(NamespaceDependent), new Type[] { }) });
+            await generator.GenerateAsync(new[] { new MinimalTypesSpec(type, new Type[] { }) });
 
             Assert.Single(interceptor.GeneratedOutputs);
 
@@ -135,39 +141,12 @@ namespace TypeGen.AcceptanceTest.Issues.CustomDependencies
 
             Assert.Single(imports);
 
-            var actualImportLocation = imports.First().Value.Split('"')[1];
-            Assert.Equal(importLocation.ToString(), actualImportLocation);
-
-        }
-
-        [Fact]
-        public async Task ImportsFromSubnamespace()
-        {
-
-            Guid importLocation = Guid.NewGuid();
-            var importMap = new CustomDependencyMap();
-            importMap.Add(typeof(NamespacedDependency).Namespace, new CustomTSDependency(importLocation.ToString()));
-
-            var opt = new GeneratorOptions
-            {
-                IncludeExplicitProperties = true,
-                StrictDependencies = true,
-                CustomDependencyMapping = importMap
-            };
-
-            var generator = new Gen.Generator(opt);
-            var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
-
-            await generator.GenerateAsync(new[] { new MinimalTypesSpec(typeof(SubNamespaceDependent), new Type[] { }) });
-
-            Assert.Single(interceptor.GeneratedOutputs);
-
-            var imports = NestedImportRegex.Matches(interceptor.GeneratedOutputs.Values.First().Content);
-
-            Assert.Single(imports);
+            string namespaceDiff = String.Join("/", dep.Namespace.Split('.').Skip(1));
+            if (namespaceDiff.Length > 0)
+                namespaceDiff = "/" + namespaceDiff;
 
             var actualImportLocation = imports.First().Value.Split('"')[1];
-            Assert.Equal(importLocation.ToString() + "/DependencySubnamespace", actualImportLocation );
+            Assert.Equal(importLocation.ToString() + namespaceDiff, actualImportLocation );
 
         }
 
