@@ -287,7 +287,7 @@ namespace TypeGen.Core.Generator.Services
                 return true;
             }
             string _namespace = type.Namespace;
-            Queue<string> droppedNamepaces = new Queue<string>();
+            List<string> droppedNamepaces = new List<string>();
             while (true)
             {
                 if (customDependencyMapping.ContainsKey(_namespace))
@@ -295,18 +295,21 @@ namespace TypeGen.Core.Generator.Services
                     var alternativeImport = customDependencyMapping[_namespace];
                     if (alternativeImport.FlatDependencyStructure)
                         alternativeImportPath = alternativeImport.Path;
-                    else if (droppedNamepaces.Count < 2)
+                    else if (droppedNamepaces.Count < 1)
                         alternativeImportPath = alternativeImport.Path;
                     else
-                        alternativeImportPath = alternativeImport.Path + "/" + droppedNamepaces.Skip(1).Aggregate((a, b) => a + "/" + b);
+                    {
+                        droppedNamepaces.Reverse();
+                        alternativeImportPath = alternativeImport.Path + droppedNamepaces.Prepend("").Aggregate((a, b) => a + "/" + b);
+                    }
 
                     defaultExport = false;
                     return true;
                 }
-                var split = _namespace.Split('.');
-                if (split.Length < 2)
+                if (!_namespace.Contains("."))
                     break;
-                    droppedNamepaces.Enqueue(split[split.Length - 1]);
+                var split = _namespace.Split('.');
+                    droppedNamepaces.Add(split[split.Length - 1]);
                 _namespace = String.Join(".", split.Take(split.Length - 1));
             }
             alternativeImportPath = null;

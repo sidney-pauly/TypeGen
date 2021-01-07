@@ -4,11 +4,18 @@ using System.Text;
 
 namespace DependencyNamespace.DependencySubnamespace
 {
-    namespace DependencyNamespace
+    public class SubNamespacedDependency
     {
-        public class SubNamespacedDependency
-        {
-        }
-
     }
+
+    
+}
+
+namespace DependencyNamespace.DependencySubnamespace.SubSubNamespace
+{
+    public class SubSubNamespacedDependency
+    {
+    }
+
+
 }
