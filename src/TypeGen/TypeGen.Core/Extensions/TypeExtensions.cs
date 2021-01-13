@@ -146,7 +146,7 @@ namespace TypeGen.Core.Extensions
                 if (type != null)
                     return type;
             }
-            throw new Exception("Type not found");
+            throw new Exception("Type" + name + "not found");
         }
 
         /// <summary>
