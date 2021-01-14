@@ -151,5 +151,19 @@ namespace TypeGen.Core.Test.Extensions
             Type actualResult = type.GetInterface(interfaceName);
             Assert.Equal(expectedResult, actualResult);
         }
+
+        [Theory]
+        [InlineData(typeof(UriFormat), "System.UriFormat")]
+        [InlineData(typeof(Tuple<>), "System.Tuple<string>")]
+        [InlineData(typeof(Tuple<>), "System.Tuple<System.Tuple<string, string>>")]
+        [InlineData(typeof(Tuple<>), "System.Tuple`1")]
+        [InlineData(typeof(Tuple<,>), "System.Tuple<string, string>")]
+        [InlineData(typeof(Tuple<,>), "System.Tuple<System.Tuple<string, string>, string>")]
+        [InlineData(typeof(Tuple<,>), "System.Tuple`2")]
+        public void GetsTypeFromFullNameCorrectly(Type type, string name)
+        {
+            var resType = Core.Extensions.TypeExtensions.GetTypeFromFullName(name);
+            Assert.Equal(type, resType);
+        }
     }
 }
