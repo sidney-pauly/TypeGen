@@ -47,7 +47,7 @@ namespace TypeGen.Core.Extensions
         /// </summary>
         /// <param name="memberInfos"></param>
         /// <param name="reader"></param>
-        /// <param name="overridenDeclaringType"></param>
+        /// <param name="neverImplementedProperyTypes"></param>
         /// <returns></returns>
         public static IEnumerable<T> WithoutTsIgnore<T>(this IEnumerable<T> memberInfos, IMetadataReader reader, HashSet<Type> neverImplementedProperyTypes) where T : MemberInfo
         {
@@ -126,12 +126,7 @@ namespace TypeGen.Core.Extensions
         /// <returns></returns>
         public static Type GetTypeFromFullName(string name)
         {
-            if (name.Contains("<"))
-            {
-                FIX FOR NESTED
-                var split = name.Split('<');
-                name = split[0] + "`" + ((split[1].Split(',').Count()));
-            }
+            name = ToCompactGenericForm(name);
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -148,6 +143,51 @@ namespace TypeGen.Core.Extensions
                     return type;
             }
             throw new Exception("Type " + name + " not found");
+        }
+
+        /// <summary>
+        /// Converts the name of a generic type in its "Type&lt;&gt;" from into
+        /// the "Type'x" form
+        /// </summary>
+        /// <returns></returns>
+        private static string ToCompactGenericForm(string toConvert)
+        {
+            string result = "";
+            int genericBracketCount = 0;
+            int genericCount = 0;
+
+            foreach(char c in toConvert)
+            {
+                if (c == '<')
+                {
+                    if (genericBracketCount == 0)
+                        genericCount++;
+                    genericBracketCount++;
+                    continue;
+                }
+
+                if (genericBracketCount < 1)
+                {
+                    result += c;
+                    continue;
+                }
+
+                if (c == '>')
+                {
+                    genericBracketCount--;
+                    continue;
+                }
+
+                if (c == ',' && genericBracketCount == 1)
+                {
+                    genericCount++;
+                }
+
+            }
+
+            if (genericCount > 0)
+                result += ("`" + genericCount);
+            return result;
         }
 
         /// <summary>
