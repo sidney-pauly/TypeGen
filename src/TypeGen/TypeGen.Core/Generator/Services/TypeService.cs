@@ -360,6 +360,8 @@ namespace TypeGen.Core.Generator.Services
         {
             // handle IDictionary<,>
             
+            GeneratorOptions.
+
             Type dictionary2Interface = type.GetInterface("System.Collections.Generic.IDictionary`2");
             if (dictionary2Interface != null || (type.FullName != null && type.FullName.StartsWith("System.Collections.Generic.IDictionary`2")))
             {
@@ -392,6 +394,7 @@ namespace TypeGen.Core.Generator.Services
         }
 
         private string GetTsDictionaryTypeText(string keyTypeName, string valueTypeName) => $"{{ [key: {keyTypeName}]: {valueTypeName}; }}";
+
         private string GetTsMapTypeText(string keyTypeName, string valueTypeName) => $" Map<{keyTypeName}, {valueTypeName}>";
 
 
@@ -583,5 +586,8 @@ namespace TypeGen.Core.Generator.Services
 
             return baseTypes;
         }
+
+        public bool IsTsSimpleDictionaryType(Type type)
+            => IsTsSimpleType(type.GetInterface("System.Collections.Generic.IDictionary`2").GetGenericArguments()[0]);
     }
 }

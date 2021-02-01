@@ -179,6 +179,10 @@ namespace TypeGen.Core.Generator.Services
                 typeDependencies = typeDependencies.Where(td => !td.IsBase);
             }
 
+            // Filter out dependencies to complex dictionary if none where provided
+            if (!GeneratorOptions.CustomDependencyMapping.ContainsKey(typeof(ComplexDictionaryDummyType).FullName))
+                typeDependencies = typeDependencies.Where(t => t.Type != typeof(ComplexDictionaryDummyType));
+
             foreach (TypeDependencyInfo typeDependencyInfo in typeDependencies)
             {
                 Type typeDependency = typeDependencyInfo.Type;

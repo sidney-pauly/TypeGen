@@ -128,6 +128,7 @@ namespace TypeGen.Core.Extensions
         {
             if (name.Contains("<"))
             {
+                FIX FOR NESTED
                 var split = name.Split('<');
                 name = split[0] + "`" + ((split[1].Split(',').Count()));
             }
@@ -146,7 +147,7 @@ namespace TypeGen.Core.Extensions
                 if (type != null)
                     return type;
             }
-            throw new Exception("Type" + name + "not found");
+            throw new Exception("Type " + name + " not found");
         }
 
         /// <summary>
