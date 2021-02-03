@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TypeGen.Core.Extensions;
 
 namespace TypeGen.Core.Generator
 {
@@ -26,8 +27,8 @@ namespace TypeGen.Core.Generator
         /// <param name="reqireingType"></param>
         /// <param name="requiredType"></param>
         public MissingDependencyException(Type reqireingType, Type requiredType)
-            : base("Dependency " + requiredType.FullName + " not found. Needed to generate "
-                  + reqireingType.FullName + ". Make sure you either ignore the type, include it in your "
+            : base("Dependency " + requiredType.GetOrCreateFullName() + " not found. Needed to generate "
+                  + reqireingType.GetOrCreateFullName() + ". Make sure you either ignore the type, include it in your "
                   + nameof(SpecGeneration.GenerationSpec) + " or provide a custom dependency mapping for it.")
         {
             RequireringType = reqireingType;

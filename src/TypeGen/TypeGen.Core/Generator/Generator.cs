@@ -396,7 +396,12 @@ namespace TypeGen.Core.Generator
                 return GenerateEnum(type, new ExportTsEnumAttribute { OutputDir = outputDirectory });
             }
 
-            throw new CoreException($"Generated type must be either a C# class or enum. Error when generating type {type.FullName}");
+            if (typeInfo.IsValueType)
+            {
+                return GenerateClass(type, new ExportTsClassAttribute { OutputDir = outputDirectory });
+            }
+
+            throw new CoreException($"Generated type must be either a C# class or enum. Error when generating type {type.GetOrCreateFullName()}");
         }
 
         /// <summary>

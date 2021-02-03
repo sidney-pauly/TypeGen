@@ -207,6 +207,11 @@ namespace TypeGen.Core.Generator
         public HashSet<Type> NeverImplementedPropertyTypes { get; set; }
 
         /// <summary>
+        /// Defines how compelx dictionries are handeled
+        /// </summary>
+        public GeneratorOptionsDictionaryModes ComplexDictionaryMode { get; set; }
+
+        /// <summary>
         /// The type used to generate <see cref="IDictionary{TKey, TValue}"/> with complex keys
         /// <see cref="GeneratorOptionsDictionaryModes.CustomComplexDictionaryType"/>. If you use
         /// a type that is provided externaly remember to add a entry to the <see cref="CustomDependencyMapping"/>

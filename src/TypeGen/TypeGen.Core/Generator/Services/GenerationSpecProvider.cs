@@ -51,7 +51,7 @@ namespace TypeGen.Core.Generator.Services
         private TypeSpec GetTypeSpec(Type type, IMetadataReader metadataReader, GeneratorOptions options)
         {
             if (!type.HasExportAttribute(metadataReader))
-                throw new CoreException($"Type '{type.FullName}' should have an ExportAttribute attribute");
+                throw new CoreException($"Type '{type.GetOrCreateFullName()}' should have an ExportAttribute attribute");
 
             var exportAttribute = metadataReader.GetAttributes(type).FirstOrDefault(a => a is ExportAttribute) as ExportAttribute;
 

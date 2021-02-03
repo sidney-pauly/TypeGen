@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using TypeGen.Core.Extensions;
 
 namespace TypeGen.Core.Generator
 {
@@ -35,7 +36,7 @@ namespace TypeGen.Core.Generator
         /// <param name="nodeImport"></param>
         public void Add(Type type, CustomTSDependency nodeImport)
         {
-            Add(type.FullName, nodeImport);
+            Add(type.GetOrCreateFullName(), nodeImport);
         }
 
 

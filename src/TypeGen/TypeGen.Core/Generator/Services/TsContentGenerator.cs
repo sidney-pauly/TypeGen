@@ -283,9 +283,9 @@ namespace TypeGen.Core.Generator.Services
         /// <returns></returns>
         private bool TryGetCutomImport(Type type, CustomDependencyMap customDependencyMapping, out string? alternativeImportPath, out bool defaultExport)
         {
-            if (customDependencyMapping.ContainsKey(type.FullName))
+            if (customDependencyMapping.ContainsKey(type.GetOrCreateFullName()))
             {
-                var alternativeImport = customDependencyMapping[type.FullName];
+                var alternativeImport = customDependencyMapping[type.GetOrCreateFullName()];
                 alternativeImportPath = alternativeImport.Path;
                 defaultExport = alternativeImport.DefaultExport;
                 return true;
@@ -436,15 +436,15 @@ namespace TypeGen.Core.Generator.Services
             }
             catch (MissingMethodException e)
             {
-                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.FullName}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.FullName}' has no default constructor.", LogLevel.Debug);
+                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.GetOrCreateFullName()}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.GetOrCreateFullName()}' has no default constructor.", LogLevel.Debug);
             }
             catch (ArgumentException e) when (e.InnerException is TypeLoadException)
             {
-                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.FullName}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.FullName}' has generic parameters with base class or interface constraints.", LogLevel.Debug);
+                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.GetOrCreateFullName()}.{memberInfo.Name}', because type '{memberInfo.DeclaringType.GetOrCreateFullName()}' has generic parameters with base class or interface constraints.", LogLevel.Debug);
             }
             catch (Exception e)
             {
-                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.FullName}.{memberInfo.Name}', because an unknown exception occurred: '{e.Message}'", LogLevel.Debug);
+                _logger?.Log($"Cannot determine the default value for member '{memberInfo.DeclaringType.GetOrCreateFullName()}.{memberInfo.Name}', because an unknown exception occurred: '{e.Message}'", LogLevel.Debug);
             }
 
             return null;

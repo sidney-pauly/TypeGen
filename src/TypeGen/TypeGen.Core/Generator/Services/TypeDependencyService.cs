@@ -186,7 +186,7 @@ namespace TypeGen.Core.Generator.Services
         /// <returns></returns>
         private IEnumerable<Type> GetGenericTypeNonDefinitionDependencies(Type type)
         {
-            if (!type.GetTypeInfo().IsGenericType) throw new CoreException($"Type {type.FullName} must be a generic type");
+            if (!type.GetTypeInfo().IsGenericType) throw new CoreException($"Type {type.GetOrCreateFullName()} must be a generic type");
 
             List<Type> result = _typeService.IsDictionaryType(type)
                 ? (_typeService.IsTsSimpleDictionaryType(type) ? new List<Type>() : new List<Type> { typeof(ComplexDictionaryDummyType)})
