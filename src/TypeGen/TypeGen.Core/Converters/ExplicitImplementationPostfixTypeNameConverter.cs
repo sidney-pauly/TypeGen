@@ -8,7 +8,7 @@ using TypeGen.Core.Utils;
 namespace TypeGen.Core.Converters
 {
     /// <summary>
-    /// Hashes the <see cref="Type.FullName"/> to allow for explizitly
+    /// Hashes the <see cref="TypeExtensions.GetOrCreateFullName()"/> to allow for explizitly
     /// implemented properties to show up in typescript. Properties wich have the
     /// same name, but come from two different itnerfaces are therefore made
     /// possible.

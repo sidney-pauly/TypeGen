@@ -98,7 +98,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Issues\IgnoreSomeBaseTypes\Expected\" />
+		<EmbeddedResource Include="Issues\ComplexDictionaries\Expected\complex-dictionary-wrapper.ts" />
+		<EmbeddedResource Include="Issues\ComplexDictionaries\Expected\generic-complex-dictionary-wrapper.ts" />
+		<EmbeddedResource Include="Issues\ComplexDictionaries\Expected\generic-complex-dictionary-wrapper-constraint.ts" />
+
+
 	</ItemGroup>
 
 </Project>

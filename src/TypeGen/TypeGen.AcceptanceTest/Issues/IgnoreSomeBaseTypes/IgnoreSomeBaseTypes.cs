@@ -25,7 +25,12 @@ namespace TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes
         [InlineData(typeof(IIgnoresAllBase), @"TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes.Expected.i-ignores-all-base.ts")]
         public async Task GeneratesCorrectly(Type type, string expectedLocation)
         {
-            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation, true);
+            var opt = new Gen.GeneratorOptions
+            {
+                IncludeExplicitProperties = true,
+                ComplexDictionaryMode = Gen.GeneratorOptionsDictionaryModes.ArrayMode
+            };
+            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation, opt);
         }
 
         /// <summary>
@@ -36,7 +41,7 @@ namespace TypeGen.AcceptanceTest.Issues.IgnoreSomeBaseTypes
         public async Task DoesNotContainIgnoredBases()
         {
 
-            var generator = new Gen.Generator();
+            var generator = new Gen.Generator(new Gen.GeneratorOptions { ComplexDictionaryMode = Gen.GeneratorOptionsDictionaryModes.ArrayMode });
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
             var generatedFiles = await generator.GenerateAsync(typeof(IIgnoresBaseInterface).Assembly);

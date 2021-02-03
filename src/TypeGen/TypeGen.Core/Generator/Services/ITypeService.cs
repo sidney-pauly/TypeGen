@@ -14,6 +14,14 @@ namespace TypeGen.Core.Generator.Services
         bool IsTsSimpleType(Type type);
 
         /// <summary>
+        /// Returns if the provided type is a <see cref="IDictionary{TKey, TValue}"/>
+        /// type with a key that is a <see cref="IsTsSimpleType(Type)"/>
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        bool IsTsSimpleDictionaryType(Type type);
+
+        /// <summary>
         /// Gets TypeScript type name for a simple type.
         /// Simple type must be one of: object, bool, string, int, long, float, double, decimal; or any type specified in GeneratorOptions.CustomMappings.
         /// </summary>

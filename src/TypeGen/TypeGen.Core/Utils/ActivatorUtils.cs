@@ -17,6 +17,8 @@ namespace TypeGen.Core.Utils
             Type[] genericArguments = type.GetGenericArguments();
             IList<Type> filledGenericArguments = new List<Type>();
 
+            string name = type.FullName ?? "";
+
             foreach (Type genericArgument in genericArguments)
             {
                 if (!genericArgument.IsGenericParameter)
@@ -31,6 +33,12 @@ namespace TypeGen.Core.Utils
                 if ((specialConstraints & GenericParameterAttributes.NotNullableValueTypeConstraint) != GenericParameterAttributes.None)
                 {
                     filledGenericArguments.Add(typeof(int));
+                    continue;
+                }
+
+                if (genericArgument.BaseType != null)
+                {
+                    filledGenericArguments.Add(genericArgument.BaseType);
                     continue;
                 }
                 

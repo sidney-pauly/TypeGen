@@ -68,11 +68,11 @@ namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
         [InlineData(typeof(DefaultExport.ClassWithImports), "TypeGen.AcceptanceTest.Generator.Expected.default_export.class-with-imports.ts")]
         [InlineData(typeof(DefaultExport.ClassWithoutDefaultExport), "TypeGen.AcceptanceTest.Generator.Expected.default_export.class-without-default-export.ts")]
         [InlineData(typeof(DefaultExport.InterfaceWithDefaultExport), "TypeGen.AcceptanceTest.Generator.Expected.default_export.interface-with-default-export.ts")]
-        public async Task TestGenerate(Type type, string expectedLocation, bool includeExplicit = false)
+        public async Task TestGenerate(Type type, string expectedLocation, GeneratorOptions customOptions = null)
         {
             var readExpectedTask = EmbededResourceReader.GetEmbeddedResourceAsync(expectedLocation);
 
-            var opt = new GeneratorOptions { IncludeExplicitProperties = includeExplicit };
+            var opt = customOptions ?? new GeneratorOptions { ComplexDictionaryMode = GeneratorOptionsDictionaryModes.ArrayMode };
             var generator = new Gen.Generator(opt);
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
@@ -91,12 +91,14 @@ namespace TypeGen.AcceptanceTest.SelfContainedGeneratorTest
         [InlineData(typeof(TestEntities.ExtendedPrimitivesClass), "TypeGen.AcceptanceTest.Generator.Expected.extended-primitives-class.ts")]
         [InlineData(typeof(TestEntities.ExternalDepsClass), "TypeGen.AcceptanceTest.Generator.Expected.external-deps-class.ts")]
         [InlineData(typeof(TestEntities.GenericBaseClass<>), "TypeGen.AcceptanceTest.Generator.Expected.generic-base-class.ts")]
-        public async Task TestGenerateSpec(Type type, string expectedLocation)
+        public async Task TestGenerateSpec(Type type, string expectedLocation, GeneratorOptions customOptions = null)
         {
             var readExpectedTask = EmbededResourceReader.GetEmbeddedResourceAsync(expectedLocation);
 
+            var opt = customOptions ?? new Gen.GeneratorOptions { ComplexDictionaryMode = GeneratorOptionsDictionaryModes.ArrayMode };
+
             var spec = new AcceptanceTestGenerationSpec();
-            var generator = new Gen.Generator();
+            var generator = new Gen.Generator(opt);
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
             await generator.GenerateAsync(new[] { spec });

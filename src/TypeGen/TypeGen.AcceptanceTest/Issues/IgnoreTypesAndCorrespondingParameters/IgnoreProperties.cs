@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
+using Gen = TypeGen.Core.Generator;
 
 namespace TypeGen.AcceptanceTest.Issues.IgnoreTypesAndCorrespondingParameters
 {
@@ -22,7 +23,12 @@ namespace TypeGen.AcceptanceTest.Issues.IgnoreTypesAndCorrespondingParameters
         [InlineData(typeof(ClassWithTransientIgnoredInterfaceBaseKeepExplicit), @"TypeGen.AcceptanceTest.Issues.IgnoreTypesAndCorrespondingParameters.Expected.ClassWithTransientIgnoredInterfaceBaseKeepExplicit.ts")]
         public async Task GeneratesCorrectly(Type type, string expectedLocation)
         {
-            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation, true);
+            var opt = new Gen.GeneratorOptions
+            {
+                IncludeExplicitProperties = true,
+                ComplexDictionaryMode = Gen.GeneratorOptionsDictionaryModes.ArrayMode
+            };
+            await new SelfContainedGeneratorTest.SelfContainedGeneratorTest().TestGenerate(type, expectedLocation, opt);
         }
     }
 }

@@ -74,7 +74,7 @@ namespace TypeGen.Core.Generator.Services
                 {
                     // Check for generic type
                     Type genericType = t.GetGenericTypeDefinition();
-                    if (GeneratorOptions.CustomTypeMappings.TryGetValue(genericType.FullName, out customTypeMappingValue))
+                    if (GeneratorOptions.CustomTypeMappings.TryGetValue(genericType.GetOrCreateFullName(), out customTypeMappingValue))
                     {
                         customType = GenerateCustomType(t, customTypeMappingValue);
                         return true;
@@ -89,14 +89,14 @@ namespace TypeGen.Core.Generator.Services
         public string GetTsSimpleTypeName(Type type)
         {
             Requires.NotNull(type, nameof(type));
-            if (string.IsNullOrWhiteSpace(type.FullName)) return null;
+            if (string.IsNullOrWhiteSpace(type.GetOrCreateFullName())) return null;
             
             if (TryGetCustomTypeMapping(type, out string customType))
             {
                 return new[] { "Object", "boolean", "string", "number", "Date" }.Contains(customType) ? customType : null;
             }
 
-            switch (type.FullName)
+            switch (type.GetOrCreateFullName())
             {
                 case "System.Enum":
                 case "System.Object":
@@ -171,20 +171,21 @@ namespace TypeGen.Core.Generator.Services
         {
             Requires.NotNull(type, nameof(type));
             
-            return type.FullName != "System.String" // not a string
+            return type.GetOrCreateFullName() != "System.String" // not a string
                 && !IsDictionaryType(type) // not a dictionary
-                && (type.GetInterface("IEnumerable") != null || (type.FullName != null && type.FullName.StartsWith("System.Collections.IEnumerable"))); // implements IEnumerable or is IEnumerable
+                && (type.GetInterface("IEnumerable") != null || (type.GetOrCreateFullName() != null && type.GetOrCreateFullName().StartsWith("System.Collections.IEnumerable"))); // implements IEnumerable or is IEnumerable
         }
 
         /// <inheritdoc />
         public bool IsDictionaryType(Type type)
         {
             Requires.NotNull(type, nameof(type));
-            
+
+            string fullName = type.GetOrCreateFullName();
             return type.GetInterface("System.Collections.Generic.IDictionary`2") != null
-                   || (type.FullName != null && type.FullName.StartsWith("System.Collections.Generic.IDictionary`2"))
+                   || (fullName != null && fullName.StartsWith("System.Collections.Generic.IDictionary`2"))
                    || type.GetInterface("System.Collections.IDictionary") != null
-                   || (type.FullName != null && type.FullName.StartsWith("System.Collections.IDictionary"));
+                   || (fullName != null && fullName.StartsWith("System.Collections.IDictionary"));
         }
 
         /// <inheritdoc />
@@ -223,7 +224,6 @@ namespace TypeGen.Core.Generator.Services
         {
             Requires.NotNull(type, nameof(type));
             Requires.NotNull(GeneratorOptions.TypeNameConverters, nameof(GeneratorOptions.TypeNameConverters));
-
             type = StripNullable(type);
 
             if (TryGetCustomTypeMapping(type, out string customType))
@@ -237,16 +237,16 @@ namespace TypeGen.Core.Generator.Services
                 return GetTsSimpleTypeName(type);
             }
 
-            // handle collection types
-            if (IsCollectionType(type))
-            {
-                return GetTsCollectionTypeName(type);
-            }
-
             // handle dictionaries
             if (IsDictionaryType(type))
             {
                 return GetTsDictionaryTypeName(type);
+            }
+
+            // handle collection types
+            if (IsCollectionType(type))
+            {
+                return GetTsCollectionTypeName(type);
             }
 
             // handle custom generic types
@@ -359,9 +359,9 @@ namespace TypeGen.Core.Generator.Services
         private string GetTsDictionaryTypeName(Type type)
         {
             // handle IDictionary<,>
-            
+
             Type dictionary2Interface = type.GetInterface("System.Collections.Generic.IDictionary`2");
-            if (dictionary2Interface != null || (type.FullName != null && type.FullName.StartsWith("System.Collections.Generic.IDictionary`2")))
+            if (dictionary2Interface != null || (type.GetOrCreateFullName() != null && type.GetOrCreateFullName().StartsWith("System.Collections.Generic.IDictionary`2")))
             {
                 Type dictionaryType = dictionary2Interface ?? type;
                 Type keyType = dictionaryType.GetGenericArguments()[0];
@@ -372,9 +372,17 @@ namespace TypeGen.Core.Generator.Services
 
                 if (!keyTypeName.In("number", "string"))
                 {
-                    return GetTsMapTypeText(keyTypeName, valueTypeName);
-                    //throw new CoreException($"Error when determining TypeScript type for C# type '{type.FullName}':" +
-                    //                        " TypeScript dictionary key type must be either 'number' or 'string'");
+                    switch (GeneratorOptions.ComplexDictionaryMode)
+                    {
+                        case GeneratorOptionsDictionaryModes.BasicTypesOnly:
+                            throw new CoreException($"Error when determining TypeScript type for C# type '{type.GetOrCreateFullName()}':" +
+                                                    " TypeScript dictionary key type must be either 'number' or 'string'");
+                        // Not fully implemented yet
+                        case GeneratorOptionsDictionaryModes.CustomComplexDictionaryType:
+                            return GetTsMapTypeText(keyTypeName, valueTypeName);
+                        case GeneratorOptionsDictionaryModes.ArrayMode:
+                            return GetTsKeyValuePairArrayText(keyTypeName, valueTypeName);
+                    }
                 }
 
                 return GetTsDictionaryTypeText(keyTypeName, valueTypeName);
@@ -383,7 +391,7 @@ namespace TypeGen.Core.Generator.Services
             // handle IDictionary
 
             if (type.GetInterface("System.Collections.IDictionary") != null ||
-                (type.FullName != null && type.FullName.StartsWith("System.Collections.IDictionary")))
+                (type.GetOrCreateFullName() != null && type.GetOrCreateFullName().StartsWith("System.Collections.IDictionary")))
             {
                 return GetTsDictionaryTypeText("string", "string");
             }
@@ -392,7 +400,12 @@ namespace TypeGen.Core.Generator.Services
         }
 
         private string GetTsDictionaryTypeText(string keyTypeName, string valueTypeName) => $"{{ [key: {keyTypeName}]: {valueTypeName}; }}";
-        private string GetTsMapTypeText(string keyTypeName, string valueTypeName) => $" Map<{keyTypeName}, {valueTypeName}>";
+
+        private string GetTsMapTypeText(string keyTypeName, string valueTypeName)
+            => $" Map<{keyTypeName}, {valueTypeName}>";
+
+        private string GetTsKeyValuePairArrayText(string keyTypeName, string valueTypeName)
+            => "{Key: " + keyTypeName + ", Value: " + valueTypeName + "}[]";
 
 
         /// <summary>
@@ -460,6 +473,7 @@ namespace TypeGen.Core.Generator.Services
         /// <summary>
         /// Extracts cconstarint attributes from genericParameters (<see cref="Type.IsGenericParameter"/> <br/>
         /// Not doing anything at the moment as constraints like new() have no exact ts equivalent.
+        /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
         private string[] GetGenericTsTypeConstraintAttributesForDecleration(Type type)
@@ -567,7 +581,7 @@ namespace TypeGen.Core.Generator.Services
             Type baseType = type.GetTypeInfo().BaseType;
             if (baseType == null || baseType == typeof(object)) return null;
 
-            if (IsTsClass(type) && IsTsInterface(baseType)) throw new CoreException($"Attempted to generate class '{type.FullName}' which extends an interface '{baseType.FullName}', which is not a valid inheritance chain in TypeScript");
+            if (IsTsClass(type) && IsTsInterface(baseType)) throw new CoreException($"Attempted to generate class '{type.GetOrCreateFullName()}' which extends an interface '{baseType.GetOrCreateFullName()}', which is not a valid inheritance chain in TypeScript");
 
             return baseType;
         }
@@ -579,9 +593,17 @@ namespace TypeGen.Core.Generator.Services
 
             IEnumerable<Type> baseTypes = type.GetTypeInfo().ImplementedInterfaces;
 
-            // if (IsTsClass(type) && IsTsInterface(baseType)) throw new CoreException($"Attempted to generate class '{type.FullName}' which extends an interface '{baseType.FullName}', which is not a valid inheritance chain in TypeScript");
+            // if (IsTsClass(type) && IsTsInterface(baseType)) throw new CoreException($"Attempted to generate class '{type.GetOrCreateFullName()}' which extends an interface '{basetype.GetOrCreateFullName()}', which is not a valid inheritance chain in TypeScript");
 
             return baseTypes;
+        }
+
+        public bool IsTsSimpleDictionaryType(Type type)
+        {
+            Type dictInterface = type.GetInterface("System.Collections.Generic.IDictionary`2");
+            if (dictInterface == null)
+                return IsDictionaryType(type);
+            return IsTsSimpleType(dictInterface.GetGenericArguments()[0]);
         }
     }
 }

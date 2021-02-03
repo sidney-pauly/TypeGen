@@ -41,7 +41,7 @@ namespace TypeGen.AcceptanceTest.Issues
         public async Task DoesNotGenerateValueType()
         {
 
-            var generator = new Gen.Generator();
+            var generator = new Gen.Generator(new Gen.GeneratorOptions { ComplexDictionaryMode = Gen.GeneratorOptionsDictionaryModes.ArrayMode });
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
 
             var generatedFiles = await generator.GenerateAsync(typeof(IRecursiveConstraintInterfaceWithStructConstraint<>).Assembly);

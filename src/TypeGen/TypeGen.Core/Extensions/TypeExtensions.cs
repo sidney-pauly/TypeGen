@@ -313,6 +313,16 @@ namespace TypeGen.Core.Extensions
                 .Distinct(new MemberUniquenessEqualitiyComparer());
         }
 
+        /// <summary>
+        /// Returns the <see cref="Type.GetOrCreateFullName()"/> or if that is null
+        /// creates a full name from <see cref="Type.Namespace"/> and
+        /// <see cref="MemberInfo.Name"/>
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string GetOrCreateFullName(this Type type) 
+            => type.FullName ?? (type.Namespace + "." + type.Name);
+
         private class MemberUniquenessEqualitiyComparer : IEqualityComparer<MemberInfo>
         {
             public bool Equals(MemberInfo x, MemberInfo y)

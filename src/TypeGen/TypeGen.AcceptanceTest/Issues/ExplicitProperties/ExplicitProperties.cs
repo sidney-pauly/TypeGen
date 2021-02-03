@@ -24,7 +24,7 @@ namespace TypeGen.AcceptanceTest.Issues.ExplicitProperties
         {
             var readExpectedTask = EmbededResourceReader.GetEmbeddedResourceAsync(expectedLocation);
 
-            var opt = new Gen.GeneratorOptions { IncludeExplicitProperties = true };
+            var opt = new Gen.GeneratorOptions { IncludeExplicitProperties = true, ComplexDictionaryMode = Gen.GeneratorOptionsDictionaryModes.ArrayMode };
             opt.PropertyNameConverters = new MemberNameConverterCollection(opt.PropertyNameConverters.Where(c => c.GetType() != typeof(PascalCaseToCamelCaseConverter)));
             var generator = new Gen.Generator(opt);
             var interceptor = GeneratorOutputInterceptor.CreateInterceptor(generator);
